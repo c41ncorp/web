@@ -8,29 +8,16 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #F7F5F0;
-    --bg2: #EFECEA;
-    --white: #FFFFFF;
-    --text: #1A1814;
-    --text2: #6B6760;
-    --text3: #A8A5A0;
-    --border: rgba(26,24,20,0.1);
-    --border2: rgba(26,24,20,0.18);
-    --purple: #534AB7;
-    --purple-light: #EEEDFE;
-    --purple-text: #3C3489;
-    --red: #C93B3A;
-    --red-light: #FAEAEA;
-    --red-text: #8B2828;
-    --green: #2D7A4F;
-    --green-light: #E8F5EE;
-    --radius: 12px;
-    --radius-sm: 8px;
+    --bg: #F7F5F0; --bg2: #EFECEA; --white: #FFFFFF;
+    --text: #1A1814; --text2: #6B6760; --text3: #A8A5A0;
+    --border: rgba(26,24,20,0.1); --border2: rgba(26,24,20,0.18);
+    --purple: #534AB7; --purple-light: #EEEDFE; --purple-text: #3C3489;
+    --red: #C93B3A; --red-light: #FAEAEA; --red-text: #8B2828;
+    --green: #2D7A4F; --green-light: #E8F5EE;
+    --radius: 12px; --radius-sm: 8px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; }
-
-  /* LAYOUT */
   #app { min-height: 100vh; }
   .screen { display: none; min-height: 100vh; }
   .screen.active { display: block; }
@@ -45,19 +32,17 @@
   .tb-btn.primary { background: var(--purple); color: white; border-color: var(--purple); }
   .tb-btn.primary:hover { background: var(--purple-text); }
 
-  /* CONTENT */
+  /* LAYOUT */
   .content { max-width: 560px; margin: 0 auto; padding: 28px 20px 60px; }
   .content-wide { max-width: 760px; margin: 0 auto; padding: 28px 20px 60px; }
 
-  /* CARDS */
+  /* CARD */
   .card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 12px; }
   .card-title { font-family: 'DM Serif Display', serif; font-size: 17px; color: var(--text); margin-bottom: 4px; }
   .card-sub { font-size: 13px; color: var(--text2); }
-
-  /* SECTION TITLE */
   .sect { font-size: 10px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin: 24px 0 8px; }
 
-  /* FORM ELEMENTS */
+  /* FORM */
   label { font-size: 13px; color: var(--text2); display: block; margin-bottom: 5px; }
   .hint { font-size: 11px; color: var(--text3); margin-top: 4px; font-style: italic; }
   input[type="text"], input[type="date"], input[type="number"], textarea, select {
@@ -65,7 +50,7 @@
     font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--text); background: var(--white);
     outline: none; transition: border-color 0.15s; line-height: 1.5;
   }
-  input:focus, textarea:focus, select:focus { border-color: var(--purple); }
+  input:focus, textarea:focus { border-color: var(--purple); }
   textarea { min-height: 72px; resize: none; }
   .field { margin-bottom: 14px; }
   .field:last-child { margin-bottom: 0; }
@@ -76,7 +61,6 @@
   .btn.primary { background: var(--purple); color: white; border-color: var(--purple); }
   .btn.primary:hover { background: var(--purple-text); }
   .btn.full { width: 100%; margin-top: 12px; }
-  .btn.danger { background: var(--red); color: white; border-color: var(--red); }
 
   /* TABS */
   .tabs { display: flex; gap: 2px; background: var(--bg2); border-radius: var(--radius-sm); padding: 3px; margin-bottom: 20px; }
@@ -87,12 +71,12 @@
   .toggle-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
   .toggle-row:last-child { border-bottom: none; }
   .toggle-label { font-size: 14px; color: var(--text); flex: 1; }
-  .toggle { width: 38px; height: 21px; border-radius: 11px; background: var(--bg2); border: 1px solid var(--border2); cursor: pointer; position: relative; flex-shrink: 0; transition: background 0.2s, border-color 0.2s; }
+  .toggle { width: 38px; height: 21px; border-radius: 11px; background: var(--bg2); border: 1px solid var(--border2); cursor: pointer; position: relative; flex-shrink: 0; transition: background 0.2s; }
   .toggle.on { background: var(--purple); border-color: var(--purple); }
   .toggle::after { content: ''; width: 15px; height: 15px; border-radius: 50%; background: white; position: absolute; top: 2px; left: 2px; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
   .toggle.on::after { left: 19px; }
 
-  /* SCALE DOTS */
+  /* SCALE */
   .scale-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
   .scale-row:last-child { border-bottom: none; }
   .scale-name { font-size: 13px; color: var(--text); flex: 1; line-height: 1.3; }
@@ -113,8 +97,9 @@
   .day-names-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-bottom: 3px; }
   .day-name-h { text-align: center; font-size: 10px; color: var(--text3); }
   .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
-  .day-cell { aspect-ratio: 1; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; cursor: pointer; position: relative; transition: transform 0.1s; }
-  .day-cell:hover { transform: scale(1.05); }
+  .day-cell { aspect-ratio: 1; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; position: relative; transition: transform 0.1s; }
+  .day-cell.clickable { cursor: pointer; }
+  .day-cell.clickable:hover { transform: scale(1.07); }
   .day-cell.cal-toma { background: var(--red); color: white; }
   .day-cell.cal-descanso { background: var(--bg2); color: var(--text3); }
   .day-cell.fad-toma { background: var(--purple); color: white; }
@@ -122,9 +107,24 @@
   .day-cell.today { outline: 2px solid var(--purple); outline-offset: 2px; }
   .day-cell.done::after { content: ''; width: 4px; height: 4px; border-radius: 50%; position: absolute; bottom: 3px; background: rgba(255,255,255,0.6); }
   .day-cell.fad-descanso.done::after, .day-cell.cal-descanso.done::after { background: var(--text3); }
+  .dosis-badge { font-size: 8px; line-height: 1; margin-top: 1px; opacity: 0.85; }
   .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
   .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
   .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+  /* MODAL DOSIS */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(26,24,20,0.5); z-index: 200; align-items: flex-end; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal-box { background: var(--white); border-radius: var(--radius) var(--radius) 0 0; padding: 24px 20px 36px; width: 100%; max-width: 480px; animation: slideUp 0.2s ease; }
+  @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-title { font-family: 'DM Serif Display', serif; font-size: 19px; margin-bottom: 3px; }
+  .modal-sub { font-size: 13px; color: var(--text2); margin-bottom: 18px; }
+  .dosis-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 14px; }
+  .dosis-input-wrap { flex: 1; }
+  .unit-toggle { display: flex; border: 1px solid var(--border2); border-radius: var(--radius-sm); overflow: hidden; height: 42px; align-self: flex-end; }
+  .unit-btn { padding: 0 18px; font-size: 13px; font-family: 'DM Sans', sans-serif; background: transparent; border: none; cursor: pointer; color: var(--text2); font-weight: 500; transition: all 0.15s; }
+  .unit-btn.active { background: var(--purple); color: white; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 8px; }
 
   /* PERSONAS */
   .persona-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: opacity 0.15s; }
@@ -138,43 +138,38 @@
   .progress-fill { height: 100%; background: var(--purple); border-radius: 2px; }
   .persona-last { font-size: 11px; color: var(--text3); flex-shrink: 0; }
 
-  /* LINK BOX */
   .link-box { background: var(--bg2); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13px; color: var(--purple-text); word-break: break-all; margin-top: 10px; border: 1px solid var(--border); font-family: monospace; font-weight: 500; }
 
-  /* WELCOME */
   .welcome { text-align: center; padding: 40px 0 28px; }
   .welcome-circle { width: 64px; height: 64px; border-radius: 50%; background: var(--purple-light); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
   .welcome h1 { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--text); margin-bottom: 8px; }
   .welcome p { font-size: 14px; color: var(--text2); line-height: 1.6; max-width: 300px; margin: 0 auto; }
 
-  /* STAT GRID */
   .stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-bottom: 16px; }
   .stat-card { background: var(--bg2); border-radius: var(--radius-sm); padding: 14px 16px; }
   .stat-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
   .stat-value { font-size: 22px; font-weight: 300; color: var(--text); font-family: 'DM Serif Display', serif; }
 
-  /* TODAY HEADER */
   .today-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
   .today-date { font-size: 13px; color: var(--text2); margin-bottom: 2px; }
   .today-day { font-family: 'DM Serif Display', serif; font-size: 24px; color: var(--text); }
   .today-intent { font-size: 13px; color: var(--text2); font-style: italic; border-top: 1px solid var(--border); padding-top: 10px; margin-top: 10px; line-height: 1.5; }
 
-  /* EMPTY STATE */
   .empty { text-align: center; padding: 48px 20px; color: var(--text3); }
   .empty p { font-size: 14px; margin-top: 8px; }
 
-  /* STEP DOTS */
-  .steps { display: flex; gap: 6px; justify-content: center; margin-bottom: 24px; }
-  .step { width: 6px; height: 6px; border-radius: 50%; background: var(--bg2); }
-  .step.active { background: var(--purple); }
-  .step.done { background: #AFA9EC; }
-
-  /* DIM BARS */
   .dim-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
   .dim-bar-label { font-size: 11px; color: var(--text2); width: 90px; text-align: right; flex-shrink: 0; }
   .dim-bar-track { flex: 1; height: 5px; background: var(--bg2); border-radius: 3px; }
   .dim-bar-fill { height: 100%; background: var(--purple); border-radius: 3px; }
   .dim-bar-val { font-size: 11px; color: var(--text3); width: 24px; }
+
+  .loading-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; flex-direction: column; gap: 14px; color: var(--text3); font-size: 14px; }
+  .spinner { width: 28px; height: 28px; border: 2px solid var(--bg2); border-top-color: var(--purple); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--text); color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 300; }
+  .toast.show { opacity: 1; }
 
   @media (max-width: 480px) {
     .content, .content-wide { padding: 20px 14px 60px; }
@@ -185,67 +180,39 @@
 <body>
 <div id="app">
 
-  <!-- TOPBAR -->
   <div class="topbar">
     <div class="topbar-logo">Bitácora</div>
-    <div class="topbar-sub" id="topbar-sub">Panel</div>
-    <div class="topbar-nav">
+    <div class="topbar-sub" id="topbar-sub">—</div>
+    <!-- FIX 6: nav solo visible en modo admin -->
+    <div class="topbar-nav" id="nav-admin" style="display:none;">
       <button class="tb-btn" onclick="showScreen('panel')">Panel</button>
-      <button class="tb-btn" onclick="showScreen('usuario')">Usuario</button>
       <button class="tb-btn primary" onclick="showScreen('nueva')">+ Nueva</button>
     </div>
   </div>
 
-  <!-- ===================== PANEL ===================== -->
-  <div id="screen-panel" class="screen active">
+  <!-- LOADING -->
+  <div id="screen-loading" class="screen active">
+    <div class="loading-screen"><div class="spinner"></div>Cargando...</div>
+  </div>
+
+  <!-- ===== PANEL ===== -->
+  <div id="screen-panel" class="screen">
     <div class="content-wide">
       <div class="tabs">
-        <div class="tab active" onclick="panelTab('personas', this)">Personas</div>
-        <div class="tab" onclick="panelTab('resumen', this)">Resumen</div>
+        <div class="tab active" onclick="panelTab('personas',this)">Personas</div>
+        <div class="tab" onclick="panelTab('resumen',this)">Resumen</div>
       </div>
-
       <div id="ptab-personas">
         <div class="stat-grid">
-          <div class="stat-card"><div class="stat-label">Activas</div><div class="stat-value">3</div></div>
-          <div class="stat-card"><div class="stat-label">Completadas</div><div class="stat-value">7</div></div>
+          <div class="stat-card"><div class="stat-label">Activas</div><div class="stat-value" id="stat-activas">—</div></div>
+          <div class="stat-card"><div class="stat-label">Completadas</div><div class="stat-value" id="stat-comp">—</div></div>
         </div>
-        <div class="card">
-          <div class="persona-row" onclick="showScreen('usuario')">
-            <div class="avatar" style="background:#EEEDFE;color:#3C3489;">ML</div>
-            <div class="persona-info">
-              <div class="persona-name">María L.</div>
-              <div class="persona-meta">Semana 3 · Día 17 · <span style="color:var(--purple);font-weight:500;">Toma hoy</span></div>
-              <div class="progress-mini"><div class="progress-fill" style="width:40%"></div></div>
-            </div>
-            <div class="persona-last">ayer</div>
-          </div>
-          <div class="persona-row">
-            <div class="avatar" style="background:#FAEAEA;color:#8B2828;">JP</div>
-            <div class="persona-info">
-              <div class="persona-name">Juan P.</div>
-              <div class="persona-meta">Calibración · Día 4 · <span style="color:var(--red);font-weight:500;">Toma hoy</span></div>
-              <div class="progress-mini"><div class="progress-fill" style="width:9%"></div></div>
-            </div>
-            <div class="persona-last">hoy</div>
-          </div>
-          <div class="persona-row">
-            <div class="avatar" style="background:#FBEAF0;color:#72243E;">SR</div>
-            <div class="persona-info">
-              <div class="persona-name">Sofía R.</div>
-              <div class="persona-meta">Semana 5 · Día 33 · Descanso</div>
-              <div class="progress-mini"><div class="progress-fill" style="width:78%"></div></div>
-            </div>
-            <div class="persona-last">2 días</div>
-          </div>
-        </div>
+        <div class="card" id="personas-list"><div class="empty"><p>Cargando personas...</p></div></div>
       </div>
-
       <div id="ptab-resumen" style="display:none;">
         <div class="stat-grid">
-          <div class="stat-card"><div class="stat-label">Activas</div><div class="stat-value">3</div></div>
-          <div class="stat-card"><div class="stat-label">Completadas</div><div class="stat-value">7</div></div>
-          <div class="stat-card"><div class="stat-label">Dosis promedio</div><div class="stat-value">0.1g</div></div>
-          <div class="stat-card"><div class="stat-label">Adherencia</div><div class="stat-value">94%</div></div>
+          <div class="stat-card"><div class="stat-label">Activas</div><div class="stat-value" id="stat-activas2">—</div></div>
+          <div class="stat-card"><div class="stat-label">Completadas</div><div class="stat-value" id="stat-comp2">—</div></div>
         </div>
         <div class="sect">Evolución por dimensión (promedio)</div>
         <div class="card" id="dim-bars-panel"></div>
@@ -253,7 +220,7 @@
     </div>
   </div>
 
-  <!-- ===================== NUEVA ===================== -->
+  <!-- ===== NUEVA ===== -->
   <div id="screen-nueva" class="screen">
     <div class="content">
       <div class="card-title" style="margin-bottom:4px;">Nueva bitácora</div>
@@ -268,20 +235,20 @@
       <div id="link-result" style="display:none;margin-top:16px;">
         <div class="sect">Link generado</div>
         <div class="link-box" id="link-texto"></div>
-        <div style="font-size:12px;color:var(--text3);margin-top:8px;text-align:center;">Compartí este link por email o WhatsApp</div>
-        <button class="btn full" style="margin-top:8px;" onclick="showScreen('usuario')">Ver como usuario →</button>
+        <div style="font-size:12px;color:var(--text3);margin-top:8px;text-align:center;">Compartí por email o WhatsApp</div>
+        <button class="btn full" style="margin-top:8px;" onclick="volverAlPanel()">← Volver al panel</button>
       </div>
     </div>
   </div>
 
-  <!-- ===================== USUARIO ===================== -->
+  <!-- ===== USUARIO ===== -->
   <div id="screen-usuario" class="screen">
     <div class="content">
       <div class="tabs" id="usuario-tabs">
-        <div class="tab active" onclick="usuarioTab('ficha', this)">Ficha</div>
-        <div class="tab" onclick="usuarioTab('hoy', this)">Hoy</div>
-        <div class="tab" onclick="usuarioTab('calendario', this)">Calendario</div>
-        <div class="tab" onclick="usuarioTab('estados', this)">Estados</div>
+        <div class="tab active" onclick="usuarioTab('ficha',this)">Ficha</div>
+        <div class="tab" onclick="usuarioTab('hoy',this)">Hoy</div>
+        <div class="tab" onclick="usuarioTab('calendario',this)">Calendario</div>
+        <div class="tab" onclick="usuarioTab('estados',this)">Estados</div>
       </div>
 
       <!-- FICHA -->
@@ -294,67 +261,40 @@
                 <path d="M13 9v4l3 2" stroke="#534AB7" stroke-width="1.5" stroke-linecap="round"/>
               </svg>
             </div>
-            <h1>Hola, María</h1>
+            <h1 id="welcome-nombre">Hola</h1>
             <p>Antes de empezar, completá tu ficha. Solo vos y tu acompañante tienen acceso.</p>
           </div>
-
           <div class="sect">¿Cuándo empezás?</div>
           <div class="card">
             <div class="field">
               <label>¿Cuándo empezás tu semana de calibración?</label>
               <input type="date" id="fecha-calibracion">
-              <div class="hint">Puede ser hoy o una fecha futura. Tu calendario se genera automáticamente desde este día.</div>
+              <div class="hint">Tu calendario se genera automáticamente desde este día.</div>
             </div>
           </div>
-
           <div class="sect">Datos generales</div>
           <div class="card">
-            <div class="field">
-              <label>Fecha de nacimiento</label>
-              <input type="date">
-            </div>
-            <div class="field">
-              <label>Peso (kg)</label>
-              <input type="number" placeholder="ej. 65">
-            </div>
-            <div class="field">
-              <label>Talla (m)</label>
-              <input type="number" placeholder="ej. 1.68" step="0.01">
-            </div>
+            <div class="field"><label>Fecha de nacimiento</label><input type="date" id="ficha-fnac"></div>
+            <div class="field"><label>Peso (kg)</label><input type="number" id="ficha-peso" placeholder="ej. 65"></div>
+            <!-- FIX 3 -->
+            <div class="field"><label>Altura (cm)</label><input type="number" id="ficha-altura" placeholder="ej. 168"></div>
           </div>
-
           <div class="sect">Intención</div>
           <div class="card">
-            <div class="field">
-              <label>¿Qué querés trabajar en este proceso?</label>
-              <textarea placeholder="Escribí tu intención con la mayor honestidad posible..."></textarea>
-            </div>
-            <div class="field">
-              <label>Beneficios que esperás</label>
-              <textarea placeholder=""></textarea>
-            </div>
-            <div class="field">
-              <label>Desafíos que anticipás</label>
-              <textarea placeholder=""></textarea>
-            </div>
+            <div class="field"><label>¿Qué querés trabajar en este proceso?</label><textarea id="ficha-intencion" placeholder="Escribí tu intención con la mayor honestidad posible..."></textarea></div>
+            <div class="field"><label>Beneficios que esperás</label><textarea id="ficha-beneficios"></textarea></div>
+            <div class="field"><label>Desafíos que anticipás</label><textarea id="ficha-desafios"></textarea></div>
           </div>
-
           <div class="sect">Antecedentes de salud</div>
           <div class="card" id="anamnesis-card"></div>
-
           <div class="sect">Consumo de sustancias (últimos 3 meses)</div>
           <div class="card" id="sustancias-card"></div>
-
           <div class="sect">Medicamentos y suplementos</div>
           <div class="card">
-            <div class="field">
-              <textarea placeholder="Con o sin receta. Agregá todo lo que estés tomando actualmente..."></textarea>
-            </div>
+            <div class="field"><textarea id="ficha-medicamentos" placeholder="Con o sin receta..."></textarea></div>
           </div>
-
           <button class="btn primary full" onclick="confirmarFicha()">Confirmar ficha y empezar</button>
         </div>
-
         <div id="ficha-ok" style="display:none;">
           <div class="welcome">
             <div class="welcome-circle" style="background:var(--green-light);">
@@ -374,58 +314,35 @@
         <div class="card">
           <div class="today-header">
             <div>
-              <div class="today-date" id="hoy-fecha-label">Jueves 14 de marzo</div>
-              <div class="today-day">Día 17</div>
+              <div class="today-date" id="hoy-fecha-label"></div>
+              <div class="today-day" id="hoy-dia-num">Día —</div>
             </div>
-            <span class="chip chip-toma-fad">Toma · 0.1g</span>
+            <span class="chip chip-descanso" id="hoy-chip">—</span>
           </div>
-          <div class="today-intent">"Soltar el control y confiar en el proceso"</div>
+          <div class="today-intent" id="hoy-intencion" style="display:none;"></div>
         </div>
-
         <div class="sect">Registro del día</div>
         <div class="card">
-          <div class="field">
-            <label>¿Cómo te sentiste hoy?</label>
-            <textarea placeholder="Escribí libremente..."></textarea>
-          </div>
-          <div class="field">
-            <label>¿Algo distinto a lo habitual?</label>
-            <textarea placeholder="Pensamientos, sensaciones, percepciones..."></textarea>
-          </div>
-          <div class="field">
-            <label>Alimentación y energía</label>
-            <textarea placeholder="¿Tuvo impacto en tu proceso hoy?"></textarea>
-          </div>
-          <div class="field">
-            <label>Sueños o sincronicidades</label>
-            <textarea placeholder="¿Les encontrás algún significado?"></textarea>
-          </div>
-          <div class="field">
-            <label>Cambios respecto a medicación o padecimiento</label>
-            <textarea placeholder="Si es tu caso..."></textarea>
-          </div>
-          <div class="field">
-            <label>Sexualidad</label>
-            <textarea placeholder="Cambios en valoración, libido, perspectiva, vitalidad..."></textarea>
-          </div>
+          <div class="field"><label>¿Cómo te sentiste hoy?</label><textarea id="hoy-sentiste" placeholder="Escribí libremente..."></textarea></div>
+          <div class="field"><label>¿Algo distinto a lo habitual?</label><textarea id="hoy-distinto" placeholder="Pensamientos, sensaciones, percepciones..."></textarea></div>
+          <div class="field"><label>Alimentación y energía</label><textarea id="hoy-alimentacion" placeholder="¿Tuvo impacto en tu proceso hoy?"></textarea></div>
+          <div class="field"><label>Sueños o sincronicidades</label><textarea id="hoy-suenos" placeholder="¿Les encontrás algún significado?"></textarea></div>
+          <div class="field"><label>Cambios respecto a medicación o padecimiento</label><textarea id="hoy-medicacion" placeholder="Si es tu caso..."></textarea></div>
+          <div class="field"><label>Sexualidad</label><textarea id="hoy-sexualidad" placeholder="Cambios en valoración, libido, perspectiva, vitalidad..."></textarea></div>
         </div>
-
         <div class="sect">Dosis de hoy</div>
         <div class="card">
-          <div class="field">
-            <label>¿Por qué esta dosis hoy?</label>
-            <textarea placeholder="Decisión de dosis o cualquier nota sobre el cambio..."></textarea>
-          </div>
+          <div class="field"><label>¿Por qué esta dosis hoy?</label><textarea id="hoy-dosis-nota" placeholder="Decisión de dosis o cualquier nota sobre el cambio..."></textarea></div>
         </div>
-
-        <button class="btn primary full">Guardar registro del día</button>
+        <!-- FIX 4: botón conectado a Firebase -->
+        <button class="btn primary full" onclick="guardarHoy()">Guardar registro del día</button>
       </div>
 
       <!-- CALENDARIO -->
       <div id="utab-calendario" style="display:none;">
         <div class="legend">
-          <div class="legend-item"><div class="legend-dot" style="background:var(--red);"></div>Toma calibración</div>
-          <div class="legend-item"><div class="legend-dot" style="background:var(--purple);"></div>Toma Fadiman</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--red);"></div>Toma · calibración</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--purple);"></div>Toma · Fadiman</div>
           <div class="legend-item"><div class="legend-dot" style="background:var(--bg2);border:1px solid var(--border2);"></div>Descanso</div>
         </div>
         <div id="cal-container"></div>
@@ -433,18 +350,48 @@
 
       <!-- ESTADOS -->
       <div id="utab-estados" style="display:none;">
-        <div style="font-size:13px;color:var(--text2);margin-bottom:16px;">Valorá cada dimensión del 1 al 5. Este registro se vincula al día de hoy.</div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:16px;">Valorá cada dimensión del 1 al 5.</div>
         <div class="card" id="scale-container"></div>
-        <button class="btn primary full">Guardar estados</button>
+        <!-- FIX 5: botón conectado a Firebase -->
+        <button class="btn primary full" onclick="guardarEstados()">Guardar estados</button>
       </div>
     </div>
   </div>
 
+</div><!-- /app -->
+
+<!-- MODAL DOSIS (FIX 2) -->
+<div class="modal-overlay" id="dosis-modal" onclick="if(event.target===this)cerrarModal()">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-titulo">Día —</div>
+    <div class="modal-sub" id="modal-tipo">Toma</div>
+    <div class="dosis-row">
+      <div class="dosis-input-wrap">
+        <label>Dosis</label>
+        <input type="number" id="modal-dosis-val" placeholder="ej. 0.1" step="0.01" min="0">
+      </div>
+      <div class="unit-toggle">
+        <button class="unit-btn active" id="unit-mg" onclick="setUnit('mg')">mg</button>
+        <button class="unit-btn" id="unit-ml" onclick="setUnit('ml')">ml</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Nota (opcional)</label>
+      <textarea id="modal-nota" placeholder="Razón del cambio u observaciones..." style="min-height:56px;"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn full" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn primary full" onclick="guardarDosis()">Guardar</button>
+    </div>
+  </div>
 </div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyB9Npxbks3QEkri97KqdW8rDEp47jwLskk",
@@ -454,30 +401,178 @@ const firebaseConfig = {
   messagingSenderId: "245606483831",
   appId: "1:245606483831:web:6671d2a9311f5d2b874372"
 };
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
 
-const firebaseApp = initializeApp(firebaseConfig);
-const db = getFirestore(firebaseApp);
-window._db = db;
-window._firebase = { collection, addDoc, getDocs, doc, setDoc, getDoc };
-
+// ─── CONSTANTES ───────────────────────────────────────────────────────────────
 const DIMS = ['Calidad de sueño','Energía','Ánimo','Autoeficacia','Tranquilidad','Amabilidad','Foco','Creatividad','Capacidad cognitiva','Autoconocimiento','Contemplación','Conexión','Espiritualidad'];
-const ANT = ['Fobias','Insomnio','TOC','Tratamiento por depresión','Intento de suicidio','Trastornos alimenticios','Esquizofrenia','Abuso sexual','Cardiopatías','Diabetes','Colesterol elevado','Depresión','Ansiedad','Estrés','Asma','Adicciones'];
+const ANT  = ['Fobias','Insomnio','TOC','Tratamiento por depresión','Intento de suicidio','Trastornos alimenticios','Esquizofrenia','Abuso sexual','Cardiopatías','Diabetes','Colesterol elevado','Depresión','Ansiedad','Estrés','Asma','Adicciones'];
 const SUST = ['Cocaína','Marihuana','Anfetaminas','Opiáceos','Mescalina','Psilocibina','Alcohol'];
 const DAY_NAMES = ['L','M','M','J','V','S','D'];
+const COLORS = [['#EEEDFE','#3C3489'],['#FAEAEA','#8B2828'],['#FBEAF0','#72243E'],['#E8F5EE','#1A5C37'],['#FFF3E0','#7A4A00'],['#E3F2FD','#1565C0']];
 
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let BID = null;       // bitacora ID del usuario actual
+let BDATA = null;     // datos del documento
+let dosisMap = {};    // { dayIdx: {valor, unidad, nota} }
+let modalDayIdx = null;
+let modalUnit = 'mg';
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  const params = new URLSearchParams(window.location.search);
+  const bid = params.get('b');
+
+  if (bid) {
+    // ── FIX 1 + FIX 6: modo usuario, sin nav admin ──
+    BID = bid;
+    document.getElementById('nav-admin').style.display = 'none';
+    await cargarUsuario(bid);
+  } else {
+    // ── modo admin ──
+    document.getElementById('nav-admin').style.display = 'flex';
+    document.getElementById('topbar-sub').textContent = 'Panel de seguimiento';
+    await loadPanel();
+  }
+});
+
+// ─── MODO USUARIO ─────────────────────────────────────────────────────────────
+async function cargarUsuario(bid) {
+  try {
+    const snap = await getDoc(doc(db, 'bitacoras', bid));
+    if (!snap.exists()) {
+      mostrarError('Bitácora no encontrada. Verificá el link con tu acompañante.');
+      return;
+    }
+    BDATA = snap.data();
+    dosisMap = BDATA.dosis || {};
+
+    document.getElementById('topbar-sub').textContent = BDATA.nombre || 'Mi bitácora';
+    document.getElementById('welcome-nombre').textContent = 'Hola, ' + (BDATA.nombre || '');
+
+    buildAnamnesis();
+    buildSustancias();
+
+    if (BDATA.fichaCompletada) {
+      document.getElementById('ficha-form').style.display = 'none';
+      document.getElementById('ficha-ok').style.display = 'block';
+    }
+
+    buildHoy();
+    showScreen('usuario');
+  } catch(e) {
+    mostrarError('Error: ' + e.message);
+  }
+}
+
+function mostrarError(msg) {
+  document.getElementById('screen-loading').innerHTML =
+    `<div class="loading-screen" style="color:var(--text2);gap:16px;">
+      <div style="font-size:36px;">⚠️</div>
+      <div style="font-size:14px;text-align:center;max-width:280px;">${msg}</div>
+     </div>`;
+  document.getElementById('screen-loading').classList.add('active');
+}
+
+// ─── MODO ADMIN: PANEL ────────────────────────────────────────────────────────
+// FIX 1B: cargar personas reales desde Firestore
+async function loadPanel() {
+  showScreen('panel');
+  try {
+    const snap = await getDocs(collection(db, 'bitacoras'));
+    const docs = [];
+    snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
+
+    const activas = docs.filter(d => d.estado !== 'completada').length;
+    const compl   = docs.filter(d => d.estado === 'completada').length;
+
+    ['stat-activas','stat-activas2'].forEach(id => { const el = document.getElementById(id); if(el) el.textContent = activas; });
+    ['stat-comp','stat-comp2'].forEach(id => { const el = document.getElementById(id); if(el) el.textContent = compl; });
+
+    const list = document.getElementById('personas-list');
+    if (!docs.length) {
+      list.innerHTML = '<div class="empty"><p>Sin bitácoras aún. Creá la primera con "+ Nueva".</p></div>';
+      return;
+    }
+
+    list.innerHTML = docs.map((d, i) => {
+      const [bg, fg] = COLORS[i % COLORS.length];
+      const initials = (d.nombre || '?').split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
+      const dias = d.diasRegistrados || 0;
+      const pct  = Math.min(100, Math.round(dias / 42 * 100));
+      const hace = d.ultimoRegistro ? tiempoDesde(d.ultimoRegistro) : '—';
+      const meta = d.fichaCompletada ? `Día ${dias} · ${d.estado === 'completada' ? 'Completada' : 'En proceso'}` : 'Pendiente de ficha';
+      const link = `${location.origin}${location.pathname}?b=${d.id}`;
+      return `
+        <div class="persona-row" onclick="window.open('${link}','_blank')">
+          <div class="avatar" style="background:${bg};color:${fg};">${initials}</div>
+          <div class="persona-info">
+            <div class="persona-name">${d.nombre || 'Sin nombre'}</div>
+            <div class="persona-meta">${meta}</div>
+            <div class="progress-mini"><div class="progress-fill" style="width:${pct}%"></div></div>
+          </div>
+          <div class="persona-last">${hace}</div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('personas-list').innerHTML = `<div class="empty"><p>Error al cargar: ${e.message}</p></div>`;
+  }
+}
+
+function tiempoDesde(iso) {
+  const m = Math.floor((Date.now() - new Date(iso)) / 60000);
+  if (m < 60) return m + ' min';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + 'h';
+  const d = Math.floor(h / 24);
+  return d === 1 ? 'ayer' : d + ' días';
+}
+
+window.volverAlPanel = async function() {
+  document.getElementById('link-result').style.display = 'none';
+  document.getElementById('new-nombre').value = '';
+  await loadPanel();
+  showScreen('panel');
+}
+
+// ─── NUEVA BITÁCORA ───────────────────────────────────────────────────────────
+window.generarLink = async function() {
+  const nombre = document.getElementById('new-nombre').value.trim();
+  if (!nombre) { toast('Ingresá un nombre'); return; }
+  const id = Math.random().toString(36).substr(2, 8);
+  await setDoc(doc(db, 'bitacoras', id), {
+    nombre,
+    creadoEn: new Date().toISOString(),
+    estado: 'activa',
+    fichaCompletada: false,
+    diasRegistrados: 0,
+    ultimoRegistro: null,
+    dosis: {}
+  });
+  const link = `${location.origin}${location.pathname}?b=${id}`;
+  document.getElementById('link-texto').textContent = link;
+  document.getElementById('link-result').style.display = 'block';
+}
+
+// ─── NAVEGACIÓN ───────────────────────────────────────────────────────────────
 window.showScreen = function(s) {
   document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-  document.getElementById('screen-'+s).classList.add('active');
-  const labels = { panel: 'Panel de seguimiento', nueva: 'Nueva bitácora', usuario: 'María L.' };
-  document.getElementById('topbar-sub').textContent = labels[s] || s;
-  if (s === 'usuario') buildUsuario();
+  document.getElementById('screen-' + s).classList.add('active');
 }
 
 window.panelTab = function(t, el) {
   document.querySelectorAll('#screen-panel .tab').forEach(e => e.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('ptab-personas').style.display = t === 'personas' ? 'block' : 'none';
-  document.getElementById('ptab-resumen').style.display = t === 'resumen' ? 'block' : 'none';
+  document.getElementById('ptab-resumen').style.display  = t === 'resumen'   ? 'block' : 'none';
   if (t === 'resumen') buildDimBars();
 }
 
@@ -485,37 +580,42 @@ window.usuarioTab = function(t, el) {
   document.querySelectorAll('#usuario-tabs .tab').forEach(e => e.classList.remove('active'));
   if (el) el.classList.add('active');
   ['ficha','hoy','calendario','estados'].forEach(tab => {
-    document.getElementById('utab-'+tab).style.display = tab === t ? 'block' : 'none';
+    document.getElementById('utab-' + tab).style.display = tab === t ? 'block' : 'none';
   });
   if (t === 'calendario') buildCal();
-  if (t === 'estados') buildScales();
+  if (t === 'estados')    buildScales();
 }
 
-window.generarLink = async function() {
-  const nombre = document.getElementById('new-nombre').value.trim();
-  if (!nombre) { alert('Ingresá un nombre'); return; }
-  const id = Math.random().toString(36).substr(2, 8);
+// ─── FICHA ────────────────────────────────────────────────────────────────────
+window.confirmarFicha = async function() {
+  if (!BID) return;
+  const antData = {};
+  document.querySelectorAll('#anamnesis-card .toggle').forEach((tog, i) => {
+    antData[ANT[i]] = tog.classList.contains('on');
+  });
+  const sustData = {};
+  document.querySelectorAll('#sustancias-card .toggle').forEach((tog, i) => {
+    sustData[SUST[i]] = tog.classList.contains('on');
+  });
   try {
-    const { doc, setDoc } = window._firebase;
-    await setDoc(doc(window._db, 'bitacoras', id), {
-      nombre, creadoEn: new Date().toISOString(), estado: 'pendiente'
+    await updateDoc(doc(db, 'bitacoras', BID), {
+      fichaCompletada: true,
+      fechaCalibracion: document.getElementById('fecha-calibracion').value,
+      peso: document.getElementById('ficha-peso').value,
+      altura: document.getElementById('ficha-altura').value,
+      fnac: document.getElementById('ficha-fnac').value,
+      intencion: document.getElementById('ficha-intencion').value,
+      beneficios: document.getElementById('ficha-beneficios').value,
+      desafios: document.getElementById('ficha-desafios').value,
+      medicamentos: document.getElementById('ficha-medicamentos').value,
+      antecedentes: antData,
+      sustancias: sustData,
     });
-    document.getElementById('link-texto').textContent = window.location.origin + '?b=' + id;
-    document.getElementById('link-result').style.display = 'block';
-  } catch(e) {
-    document.getElementById('link-texto').textContent = window.location.origin + '?b=' + id + ' (sin conexión: ' + e.message + ')';
-    document.getElementById('link-result').style.display = 'block';
-  }
-}
-
-window.confirmarFicha = function() {
-  document.getElementById('ficha-form').style.display = 'none';
-  document.getElementById('ficha-ok').style.display = 'block';
-}
-
-function buildUsuario() {
-  buildAnamnesis();
-  buildSustancias();
+    BDATA = { ...BDATA, fichaCompletada: true, intencion: document.getElementById('ficha-intencion').value };
+    document.getElementById('ficha-form').style.display = 'none';
+    document.getElementById('ficha-ok').style.display = 'block';
+    toast('Ficha guardada ✓');
+  } catch(e) { toast('Error: ' + e.message); }
 }
 
 function buildAnamnesis() {
@@ -538,13 +638,61 @@ function buildSustancias() {
     </div>`).join('');
 }
 
+// ─── HOY ──────────────────────────────────────────────────────────────────────
+function buildHoy() {
+  const now = new Date();
+  document.getElementById('hoy-fecha-label').textContent =
+    now.toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+  const dias = (BDATA?.diasRegistrados || 0) + 1;
+  document.getElementById('hoy-dia-num').textContent = 'Día ' + dias;
+  const tipo = getTipoDia(dias - 1);
+  const chip = document.getElementById('hoy-chip');
+  if (tipo === 'cal-toma')  { chip.textContent = 'Toma · Calibración'; chip.className = 'chip chip-toma-cal'; }
+  else if (tipo === 'fad-toma') { chip.textContent = 'Toma · Fadiman'; chip.className = 'chip chip-toma-fad'; }
+  else { chip.textContent = 'Descanso'; chip.className = 'chip chip-descanso'; }
+  const intEl = document.getElementById('hoy-intencion');
+  if (BDATA?.intencion) { intEl.textContent = '"' + BDATA.intencion + '"'; intEl.style.display = 'block'; }
+}
+
+// FIX 4: guardar registro del día en Firestore
+window.guardarHoy = async function() {
+  if (!BID) { toast('Sin conexión a bitácora'); return; }
+  const dia = (BDATA?.diasRegistrados || 0) + 1;
+  const registro = {
+    fecha: new Date().toISOString(),
+    sentiste:     document.getElementById('hoy-sentiste').value,
+    distinto:     document.getElementById('hoy-distinto').value,
+    alimentacion: document.getElementById('hoy-alimentacion').value,
+    suenos:       document.getElementById('hoy-suenos').value,
+    medicacion:   document.getElementById('hoy-medicacion').value,
+    sexualidad:   document.getElementById('hoy-sexualidad').value,
+    dosisNota:    document.getElementById('hoy-dosis-nota').value,
+  };
+  try {
+    await updateDoc(doc(db, 'bitacoras', BID), {
+      diasRegistrados: dia,
+      ultimoRegistro: new Date().toISOString(),
+      [`registros.dia${dia}`]: registro
+    });
+    BDATA.diasRegistrados = dia;
+    // Limpiar campos
+    ['hoy-sentiste','hoy-distinto','hoy-alimentacion','hoy-suenos','hoy-medicacion','hoy-sexualidad','hoy-dosis-nota']
+      .forEach(id => { document.getElementById(id).value = ''; });
+    buildHoy();
+    toast('Registro del día guardado ✓');
+  } catch(e) { toast('Error al guardar: ' + e.message); }
+}
+
+// ─── CALENDARIO ───────────────────────────────────────────────────────────────
+function getTipoDia(idx) {
+  if (idx < 7) return idx % 2 === 0 ? 'cal-toma' : 'cal-descanso';
+  return (idx - 7) % 3 === 0 ? 'fad-toma' : 'fad-descanso';
+}
+
 function buildCal() {
   const c = document.getElementById('cal-container');
-  if (c.children.length) return;
-  const protocol = [];
-  for (let i = 0; i < 7; i++) protocol.push(i % 2 === 0 ? 'cal-toma' : 'cal-descanso');
-  for (let i = 7; i < 42; i++) protocol.push((i - 7) % 3 === 0 ? 'fad-toma' : 'fad-descanso');
-  const TODAY = 16;
+  c.innerHTML = '';
+  const hoy = BDATA?.diasRegistrados || 0;
   let html = '';
   for (let w = 0; w < 6; w++) {
     const lbl = w === 0 ? 'Semana 1 · Calibración' : `Semana ${w+1} · Fadiman`;
@@ -552,16 +700,62 @@ function buildCal() {
     html += '<div class="day-names-row">' + DAY_NAMES.map(d => `<div class="day-name-h">${d}</div>`).join('') + '</div>';
     html += '<div class="week-grid">';
     for (let d = 0; d < 7; d++) {
-      const idx = w * 7 + d;
-      const type = protocol[idx] || 'fad-descanso';
-      const cls = [type, idx === TODAY ? 'today' : '', idx < TODAY ? 'done' : ''].filter(Boolean).join(' ');
-      html += `<div class="day-cell ${cls}">${idx + 1}</div>`;
+      const idx  = w * 7 + d;
+      const tipo = getTipoDia(idx);
+      const esToma = tipo.includes('toma');
+      const cached = dosisMap[idx];
+      const badge  = cached ? `<div class="dosis-badge">${cached.valor}${cached.unidad}</div>` : '';
+      const cls = [tipo, idx === hoy ? 'today' : '', idx < hoy ? 'done' : '', esToma ? 'clickable' : ''].filter(Boolean).join(' ');
+      // FIX 2: solo días de toma abren modal
+      const click = esToma ? `onclick="abrirModal(${idx},'${tipo}')"` : '';
+      html += `<div class="day-cell ${cls}" ${click}><span>${idx+1}</span>${badge}</div>`;
     }
     html += '</div></div>';
   }
   c.innerHTML = html;
 }
 
+// FIX 2: modal dosis
+window.abrirModal = function(idx, tipo) {
+  modalDayIdx = idx;
+  document.getElementById('modal-titulo').textContent = 'Día ' + (idx + 1);
+  document.getElementById('modal-tipo').textContent = tipo === 'cal-toma' ? 'Toma · Calibración' : 'Toma · Fadiman';
+  const c = dosisMap[idx] || {};
+  document.getElementById('modal-dosis-val').value = c.valor || '';
+  document.getElementById('modal-nota').value = c.nota || '';
+  setUnit(c.unidad || 'mg');
+  document.getElementById('dosis-modal').classList.add('open');
+}
+
+window.cerrarModal = function() {
+  document.getElementById('dosis-modal').classList.remove('open');
+  modalDayIdx = null;
+}
+
+window.setUnit = function(u) {
+  modalUnit = u;
+  document.getElementById('unit-mg').classList.toggle('active', u === 'mg');
+  document.getElementById('unit-ml').classList.toggle('active', u === 'ml');
+}
+
+window.guardarDosis = async function() {
+  if (modalDayIdx === null) return;
+  const val  = document.getElementById('modal-dosis-val').value;
+  const nota = document.getElementById('modal-nota').value;
+  dosisMap[modalDayIdx] = { valor: val, unidad: modalUnit, nota };
+  cerrarModal();
+  buildCal();
+  if (BID) {
+    try {
+      await updateDoc(doc(db, 'bitacoras', BID), {
+        [`dosis.${modalDayIdx}`]: { valor: val, unidad: modalUnit, nota }
+      });
+      toast('Dosis guardada ✓');
+    } catch(e) { toast('Error: ' + e.message); }
+  }
+}
+
+// ─── ESTADOS ──────────────────────────────────────────────────────────────────
 function buildScales() {
   const c = document.getElementById('scale-container');
   if (c.children.length) return;
@@ -575,16 +769,34 @@ function buildScales() {
 }
 
 window.selDot = function(dim, val) {
-  for (let n = 1; n <= 5; n++) {
-    const el = document.getElementById(`sc${dim}_${n}`);
-    if (el) el.classList.toggle('sel', n === val);
-  }
+  for (let n = 1; n <= 5; n++)
+    document.getElementById(`sc${dim}_${n}`)?.classList.toggle('sel', n === val);
 }
 
+// FIX 5: guardar estados en Firestore
+window.guardarEstados = async function() {
+  if (!BID) { toast('Sin conexión a bitácora'); return; }
+  const estados = {};
+  DIMS.forEach((d, di) => {
+    for (let n = 1; n <= 5; n++) {
+      if (document.getElementById(`sc${di}_${n}`)?.classList.contains('sel'))
+        estados[d] = n;
+    }
+  });
+  const dia = BDATA?.diasRegistrados || 1;
+  try {
+    await updateDoc(doc(db, 'bitacoras', BID), {
+      [`estados.dia${dia}`]: estados
+    });
+    toast('Estados guardados ✓');
+  } catch(e) { toast('Error: ' + e.message); }
+}
+
+// ─── DIM BARS ─────────────────────────────────────────────────────────────────
 function buildDimBars() {
   const c = document.getElementById('dim-bars-panel');
   if (c.children.length) return;
-  const data = [4.2,3.8,4.5,3.9,4.1,4.0,3.7,4.3,3.6,4.4,3.5,4.2,3.8];
+  const data  = [4.2,3.8,4.5,3.9,4.1,4.0,3.7,4.3,3.6,4.4,3.5,4.2,3.8];
   const short = ['Sueño','Energía','Ánimo','Autoeficacia','Tranquilidad','Amabilidad','Foco','Creatividad','Cognitivo','Autocon.','Contempl.','Conexión','Espirit.'];
   c.innerHTML = short.map((d, i) => `
     <div class="dim-bar-row">
