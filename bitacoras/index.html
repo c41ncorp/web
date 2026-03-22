@@ -168,6 +168,39 @@
   .spinner { width: 28px; height: 28px; border: 2px solid var(--bg2); border-top-color: var(--purple); border-radius: 50%; animation: spin 0.7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* VISTA ADMIN PARTICIPANTE */
+  .admin-header { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
+  .admin-avatar { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 500; flex-shrink: 0; }
+  .admin-nombre { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--text); }
+  .admin-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .back-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text2); cursor: pointer; margin-bottom: 16px; padding: 6px 0; }
+  .back-btn:hover { color: var(--purple); }
+  .ficha-row { display: flex; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .ficha-row:last-child { border-bottom: none; }
+  .ficha-key { color: var(--text2); width: 180px; flex-shrink: 0; font-size: 13px; }
+  .ficha-val { color: var(--text); flex: 1; line-height: 1.5; }
+  .registro-item { padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .registro-item:last-child { border-bottom: none; }
+  .registro-dia { font-family: 'DM Serif Display', serif; font-size: 15px; color: var(--text); margin-bottom: 10px; }
+  .registro-campo { margin-bottom: 8px; }
+  .registro-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 2px; }
+  .registro-texto { font-size: 13px; color: var(--text); line-height: 1.6; }
+  .estado-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .estado-item { background: var(--bg2); border-radius: var(--radius-sm); padding: 10px 12px; }
+  .estado-dim { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+  .estado-score { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--purple); }
+  .dosis-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .dosis-item:last-child { border-bottom: none; }
+  .dosis-dia-badge { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; flex-shrink: 0; }
+  .dosis-dia-badge.cal { background: var(--red-light); color: var(--red-text); }
+  .dosis-dia-badge.fad { background: var(--purple-light); color: var(--purple-text); }
+  .dosis-info { flex: 1; }
+  .dosis-valor { font-size: 15px; font-weight: 500; color: var(--text); }
+  .dosis-nota-txt { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .tag-si { display: inline-block; background: #E8F5EE; color: #1A5C37; font-size: 11px; padding: 2px 8px; border-radius: 10px; margin: 2px; }
+  .tag-no { display: inline-block; background: var(--bg2); color: var(--text3); font-size: 11px; padding: 2px 8px; border-radius: 10px; margin: 2px; }
+  .empty-tab { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 13px; }
+
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--text); color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 300; }
   .toast.show { opacity: 1; }
 
@@ -238,6 +271,30 @@
         <div style="font-size:12px;color:var(--text3);margin-top:8px;text-align:center;">Compartí por email o WhatsApp</div>
         <button class="btn full" style="margin-top:8px;" onclick="volverAlPanel()">← Volver al panel</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ===== ADMIN: VER PARTICIPANTE ===== -->
+  <div id="screen-admin-persona" class="screen">
+    <div class="content-wide">
+      <div class="back-btn" onclick="volverAlPanelDesdePersona()">← Volver al panel</div>
+      <div class="admin-header">
+        <div class="admin-avatar" id="ap-avatar"></div>
+        <div>
+          <div class="admin-nombre" id="ap-nombre">—</div>
+          <div class="admin-meta" id="ap-meta">—</div>
+        </div>
+      </div>
+      <div class="tabs" id="ap-tabs">
+        <div class="tab active" onclick="apTab(&apos;ficha&apos;,this)">Ficha</div>
+        <div class="tab" onclick="apTab(&apos;registros&apos;,this)">Registros</div>
+        <div class="tab" onclick="apTab(&apos;estados&apos;,this)">Estados</div>
+        <div class="tab" onclick="apTab(&apos;dosis&apos;,this)">Dosis</div>
+      </div>
+      <div id="aptab-ficha"><div class="card" id="ap-ficha-content"></div></div>
+      <div id="aptab-registros" style="display:none;"><div class="card" id="ap-registros-content"></div></div>
+      <div id="aptab-estados" style="display:none;"><div id="ap-estados-content"></div></div>
+      <div id="aptab-dosis" style="display:none;"><div class="card" id="ap-dosis-content"></div></div>
     </div>
   </div>
 
@@ -512,7 +569,7 @@ async function loadPanel() {
       const meta = d.fichaCompletada ? `Día ${dias} · ${d.estado === 'completada' ? 'Completada' : 'En proceso'}` : 'Pendiente de ficha';
       const link = `${location.origin}${location.pathname}?b=${d.id}`;
       return `
-        <div class="persona-row" onclick="window.open('${link}','_blank')">
+        <div class="persona-row" onclick="verPersona('${d.id}','${bg}','${fg}','${initials}')">
           <div class="avatar" style="background:${bg};color:${fg};">${initials}</div>
           <div class="persona-info">
             <div class="persona-name">${d.nombre || 'Sin nombre'}</div>
@@ -804,6 +861,177 @@ function buildDimBars() {
       <div class="dim-bar-track"><div class="dim-bar-fill" style="width:${(data[i]/5*100).toFixed(0)}%"></div></div>
       <div class="dim-bar-val">${data[i]}</div>
     </div>`).join('');
+}
+
+// ─── VISTA ADMIN DE PARTICIPANTE ─────────────────────────────────────────────
+let adminPersonaData = null;
+
+window.verPersona = async function(bid, bg, fg, initials) {
+  try {
+    const snap = await getDoc(doc(db, 'bitacoras', bid));
+    if (!snap.exists()) { toast('No se encontró la bitácora'); return; }
+    adminPersonaData = { id: bid, ...snap.data() };
+    const d = adminPersonaData;
+
+    // Header
+    const av = document.getElementById('ap-avatar');
+    av.textContent = initials;
+    av.style.background = bg;
+    av.style.color = fg;
+    document.getElementById('ap-nombre').textContent = d.nombre || 'Sin nombre';
+    const dias = d.diasRegistrados || 0;
+    document.getElementById('ap-meta').textContent =
+      d.fichaCompletada ? `Día ${dias} de 42 · ${d.estado || 'activa'}` : 'Pendiente de ficha';
+
+    // Reset tabs
+    document.querySelectorAll('#ap-tabs .tab').forEach((t,i) => t.classList.toggle('active', i===0));
+    ['ficha','registros','estados','dosis'].forEach(t => {
+      document.getElementById('aptab-' + t).style.display = t === 'ficha' ? 'block' : 'none';
+    });
+
+    renderApFicha(d);
+    showScreen('admin-persona');
+  } catch(e) { toast('Error: ' + e.message); }
+}
+
+window.volverAlPanelDesdePersona = async function() {
+  adminPersonaData = null;
+  await loadPanel();
+}
+
+window.apTab = function(t, el) {
+  document.querySelectorAll('#ap-tabs .tab').forEach(e => e.classList.remove('active'));
+  if (el) el.classList.add('active');
+  ['ficha','registros','estados','dosis'].forEach(tab => {
+    document.getElementById('aptab-' + tab).style.display = tab === t ? 'block' : 'none';
+  });
+  const d = adminPersonaData;
+  if (!d) return;
+  if (t === 'registros') renderApRegistros(d);
+  if (t === 'estados')   renderApEstados(d);
+  if (t === 'dosis')     renderApDosis(d);
+}
+
+function renderApFicha(d) {
+  const rows = [
+    ['Nombre', d.nombre || '—'],
+    ['Fecha de nacimiento', d.fnac || '—'],
+    ['Peso', d.peso ? d.peso + ' kg' : '—'],
+    ['Altura', d.altura ? d.altura + ' cm' : '—'],
+    ['Inicio calibración', d.fechaCalibracion || '—'],
+    ['Intención', d.intencion || '—'],
+    ['Beneficios esperados', d.beneficios || '—'],
+    ['Desafíos anticipados', d.desafios || '—'],
+    ['Medicamentos', d.medicamentos || '—'],
+  ];
+  let html = rows.map(([k, v]) => `
+    <div class="ficha-row">
+      <div class="ficha-key">${k}</div>
+      <div class="ficha-val">${v}</div>
+    </div>`).join('');
+
+  // Antecedentes
+  if (d.antecedentes) {
+    const si = Object.entries(d.antecedentes).filter(([,v]) => v).map(([k]) => k);
+    if (si.length) {
+      html += `<div class="ficha-row">
+        <div class="ficha-key">Antecedentes</div>
+        <div class="ficha-val">${si.map(s => `<span class="tag-si">${s}</span>`).join('')}</div>
+      </div>`;
+    }
+  }
+  // Sustancias
+  if (d.sustancias) {
+    const si = Object.entries(d.sustancias).filter(([,v]) => v).map(([k]) => k);
+    if (si.length) {
+      html += `<div class="ficha-row">
+        <div class="ficha-key">Sustancias (3m)</div>
+        <div class="ficha-val">${si.map(s => `<span class="tag-si">${s}</span>`).join('')}</div>
+      </div>`;
+    }
+  }
+  document.getElementById('ap-ficha-content').innerHTML = html || '<div class="empty-tab">Sin ficha completada aún.</div>';
+}
+
+function renderApRegistros(d) {
+  const regs = d.registros || {};
+  const keys = Object.keys(regs).sort((a,b) => {
+    const na = parseInt(a.replace('dia',''));
+    const nb = parseInt(b.replace('dia',''));
+    return nb - na; // más reciente primero
+  });
+  if (!keys.length) {
+    document.getElementById('ap-registros-content').innerHTML = '<div class="empty-tab">Sin registros diarios aún.</div>';
+    return;
+  }
+  const CAMPOS = [
+    ['sentiste', '¿Cómo te sentiste?'],
+    ['distinto', '¿Algo distinto?'],
+    ['alimentacion', 'Alimentación y energía'],
+    ['suenos', 'Sueños o sincronicidades'],
+    ['medicacion', 'Cambios en medicación'],
+    ['sexualidad', 'Sexualidad'],
+    ['dosisNota', 'Nota sobre dosis'],
+  ];
+  document.getElementById('ap-registros-content').innerHTML = keys.map(k => {
+    const num = k.replace('dia','');
+    const r = regs[k];
+    const fecha = r.fecha ? new Date(r.fecha).toLocaleDateString('es-AR', {day:'numeric',month:'long'}) : '';
+    const campos = CAMPOS.filter(([id]) => r[id]).map(([id, lbl]) => `
+      <div class="registro-campo">
+        <div class="registro-label">${lbl}</div>
+        <div class="registro-texto">${r[id]}</div>
+      </div>`).join('');
+    return `<div class="registro-item">
+      <div class="registro-dia">Día ${num} ${fecha ? '· ' + fecha : ''}</div>
+      ${campos || '<span style="font-size:13px;color:var(--text3);">Sin texto registrado.</span>'}
+    </div>`;
+  }).join('');
+}
+
+function renderApEstados(d) {
+  const estados = d.estados || {};
+  const keys = Object.keys(estados).sort((a,b) => parseInt(b.replace('dia','')) - parseInt(a.replace('dia','')));
+  const c = document.getElementById('ap-estados-content');
+  if (!keys.length) {
+    c.innerHTML = '<div class="card"><div class="empty-tab">Sin estados registrados aún.</div></div>';
+    return;
+  }
+  c.innerHTML = keys.map(k => {
+    const num = k.replace('dia','');
+    const est = estados[k];
+    const items = Object.entries(est).map(([dim, val]) => `
+      <div class="estado-item">
+        <div class="estado-dim">${dim}</div>
+        <div class="estado-score">${val}</div>
+      </div>`).join('');
+    return `<div class="card" style="margin-bottom:12px;">
+      <div style="font-family:'DM Serif Display',serif;font-size:15px;margin-bottom:12px;">Día ${num}</div>
+      <div class="estado-grid">${items}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderApDosis(d) {
+  const dosis = d.dosis || {};
+  const keys = Object.keys(dosis).map(Number).sort((a,b) => a-b);
+  if (!keys.length) {
+    document.getElementById('ap-dosis-content').innerHTML = '<div class="empty-tab">Sin dosis registradas aún.</div>';
+    return;
+  }
+  document.getElementById('ap-dosis-content').innerHTML = keys.map(idx => {
+    const dobj = dosis[idx];
+    const tipo = getTipoDia(idx);
+    const cls = tipo === 'cal-toma' ? 'cal' : 'fad';
+    const label = tipo === 'cal-toma' ? 'Cal' : 'Fad';
+    return `<div class="dosis-item">
+      <div class="dosis-dia-badge ${cls}">D${idx+1}</div>
+      <div class="dosis-info">
+        <div class="dosis-valor">${dobj.valor || '—'} ${dobj.unidad || ''} <span style="font-size:11px;color:var(--text3);">${label}</span></div>
+        ${dobj.nota ? `<div class="dosis-nota-txt">${dobj.nota}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
 }
 </script>
 </body>
