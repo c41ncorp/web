@@ -1,1038 +1,3464 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="light" data-role="participant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bitácora · Microdosis</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #F7F5F0; --bg2: #EFECEA; --white: #FFFFFF;
-    --text: #1A1814; --text2: #6B6760; --text3: #A8A5A0;
-    --border: rgba(26,24,20,0.1); --border2: rgba(26,24,20,0.18);
-    --purple: #534AB7; --purple-light: #EEEDFE; --purple-text: #3C3489;
-    --red: #C93B3A; --red-light: #FAEAEA; --red-text: #8B2828;
-    --green: #2D7A4F; --green-light: #E8F5EE;
-    --radius: 12px; --radius-sm: 8px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; }
-  #app { min-height: 100vh; }
-  .screen { display: none; min-height: 100vh; }
-  .screen.active { display: block; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitácora SAVIA — Microdosis</title>
+  
+  <!-- SEO & Meta Tags -->
+  <meta name="description" content="Herramienta clínica premium para el seguimiento personalizado de procesos de microdosis en SAVIA.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  
+  <!-- jsPDF Library from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  /* TOPBAR */
-  .topbar { display: flex; align-items: center; gap: 12px; padding: 16px 20px; background: var(--white); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
-  .topbar-logo { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--text); letter-spacing: -0.3px; }
-  .topbar-sub { font-size: 12px; color: var(--text3); flex: 1; }
-  .topbar-nav { display: flex; gap: 6px; }
-  .tb-btn { padding: 6px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: transparent; font-size: 12px; font-family: 'DM Sans', sans-serif; color: var(--text2); cursor: pointer; font-weight: 500; transition: all 0.15s; }
-  .tb-btn:hover { background: var(--bg2); }
-  .tb-btn.primary { background: var(--purple); color: white; border-color: var(--purple); }
-  .tb-btn.primary:hover { background: var(--purple-text); }
+  <!-- Tailwind/CSS Import map for Firebase -->
+  <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js"
+      }
+    }
+  </script>
 
-  /* LAYOUT */
-  .content { max-width: 560px; margin: 0 auto; padding: 28px 20px 60px; }
-  .content-wide { max-width: 760px; margin: 0 auto; padding: 28px 20px 60px; }
+  <style>
+    /* ==========================================================================
+       1. SISTEMA DE DISEÑO & VARIABLES CSS (CLARO / OSCURO / ROLES)
+       ========================================================================== */
+    :root {
+      /* Colores Base Constantes */
+      --white: #FFFFFF;
+      --purple: #534AB7;
+      --purple-light: #EEEDFE;
+      --purple-text: #3C3489;
+      --red: #C93B3A;
+      --red-light: #FAEAEA;
+      --green: #2D7A4F;
+      --green-light: #E8F5EE;
+      
+      /* Tipografía */
+      --font-display: 'DM Serif Display', 'Playfair Display', Georgia, serif;
+      --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      
+      /* Tema Claro (Por defecto: Participante - Crema) */
+      --bg-app: #F7F5F0;
+      --bg-surface: #FFFFFF;
+      --text-primary: #1A1814;
+      --text-secondary: #6B6760;
+      --text-tertiary: #A8A5A0;
+      
+      --border-soft: #E8E6E3;
+      --border-mid: #D0CEC9;
+      --shadow-subtle: 0 4px 24px -4px rgba(26, 24, 20, 0.05);
+      --transition-speed: 0.3s;
+    }
 
-  /* CARD */
-  .card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 12px; }
-  .card-title { font-family: 'DM Serif Display', serif; font-size: 17px; color: var(--text); margin-bottom: 4px; }
-  .card-sub { font-size: 13px; color: var(--text2); }
-  .sect { font-size: 10px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin: 24px 0 8px; }
+    /* Override Tema Claro - Admin (Azul Mineral) */
+    html[data-role="admin"] {
+      --bg-app: #EBF1F5;
+    }
 
-  /* FORM */
-  label { font-size: 13px; color: var(--text2); display: block; margin-bottom: 5px; }
-  .hint { font-size: 11px; color: var(--text3); margin-top: 4px; font-style: italic; }
-  input[type="text"], input[type="date"], input[type="number"], textarea, select {
-    width: 100%; padding: 10px 13px; border: 1px solid var(--border2); border-radius: var(--radius-sm);
-    font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--text); background: var(--white);
-    outline: none; transition: border-color 0.15s; line-height: 1.5;
-  }
-  input:focus, textarea:focus { border-color: var(--purple); }
-  textarea { min-height: 72px; resize: none; }
-  .field { margin-bottom: 14px; }
-  .field:last-child { margin-bottom: 0; }
+    /* Modo Oscuro Global */
+    html[data-theme="dark"] {
+      --white: #1A1917;
+      --bg-surface: #1E1C1A;
+      --text-primary: #F2EFEA;
+      --text-secondary: #AAA69F;
+      --text-tertiary: #75726C;
+      --border-soft: #2E2B27;
+      --border-mid: #47433D;
+      --shadow-subtle: 0 4px 30px rgba(0, 0, 0, 0.3);
+      --purple-light: #211E45;
+      --purple-text: #B4AEFA;
+      --red-light: #3D1C1B;
+      --green-light: #162E20;
+    }
 
-  /* BUTTONS */
-  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 11px 20px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: transparent; font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--text); cursor: pointer; font-weight: 500; transition: all 0.15s; }
-  .btn:hover { background: var(--bg2); }
-  .btn.primary { background: var(--purple); color: white; border-color: var(--purple); }
-  .btn.primary:hover { background: var(--purple-text); }
-  .btn.full { width: 100%; margin-top: 12px; }
+    /* Modo Oscuro - Admin */
+    html[data-theme="dark"][data-role="admin"] {
+      --white: #171A1E;
+      --bg-surface: #1B1E22;
+      --bg-app: #111417;
+      --border-soft: #252B33;
+      --border-mid: #3C4552;
+    }
 
-  /* TABS */
-  .tabs { display: flex; gap: 2px; background: var(--bg2); border-radius: var(--radius-sm); padding: 3px; margin-bottom: 20px; }
-  .tab { flex: 1; padding: 8px 4px; text-align: center; font-size: 13px; border-radius: 6px; cursor: pointer; color: var(--text2); font-weight: 500; transition: all 0.15s; }
-  .tab.active { background: var(--white); color: var(--text); border: 1px solid var(--border); }
+    /* Reset General */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-  /* TOGGLE */
-  .toggle-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
-  .toggle-row:last-child { border-bottom: none; }
-  .toggle-label { font-size: 14px; color: var(--text); flex: 1; }
-  .toggle { width: 38px; height: 21px; border-radius: 11px; background: var(--bg2); border: 1px solid var(--border2); cursor: pointer; position: relative; flex-shrink: 0; transition: background 0.2s; }
-  .toggle.on { background: var(--purple); border-color: var(--purple); }
-  .toggle::after { content: ''; width: 15px; height: 15px; border-radius: 50%; background: white; position: absolute; top: 2px; left: 2px; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
-  .toggle.on::after { left: 19px; }
+    body {
+      background-color: var(--bg-app);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.6;
+      transition: background-color var(--transition-speed), color var(--transition-speed);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
 
-  /* SCALE */
-  .scale-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
-  .scale-row:last-child { border-bottom: none; }
-  .scale-name { font-size: 13px; color: var(--text); flex: 1; line-height: 1.3; }
-  .dots { display: flex; gap: 5px; }
-  .dot { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border2); background: var(--bg2); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text3); font-weight: 500; transition: all 0.15s; }
-  .dot:hover { border-color: var(--purple); color: var(--purple); }
-  .dot.sel { background: var(--purple); color: white; border-color: var(--purple); }
+    h1, h2, h3, h4, .font-display {
+      font-family: var(--font-display);
+      font-weight: normal;
+      color: var(--text-primary);
+    }
 
-  /* CHIPS */
-  .chip { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
-  .chip-toma-fad { background: var(--purple); color: white; }
-  .chip-toma-cal { background: var(--red); color: white; }
-  .chip-descanso { background: var(--bg2); color: var(--text2); }
+    button, input, textarea, select {
+      font-family: var(--font-sans);
+      color: inherit;
+    }
 
-  /* CALENDAR */
-  .week-block { margin-bottom: 16px; }
-  .week-label { font-size: 11px; font-weight: 500; color: var(--text3); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
-  .day-names-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-bottom: 3px; }
-  .day-name-h { text-align: center; font-size: 10px; color: var(--text3); }
-  .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
-  .day-cell { aspect-ratio: 1; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; position: relative; transition: transform 0.1s; }
-  .day-cell.clickable { cursor: pointer; }
-  .day-cell.clickable:hover { transform: scale(1.07); }
-  .day-cell.cal-toma { background: var(--red); color: white; }
-  .day-cell.cal-descanso { background: var(--bg2); color: var(--text3); }
-  .day-cell.fad-toma { background: var(--purple); color: white; }
-  .day-cell.fad-descanso { background: var(--purple-light); color: #AFA9EC; }
-  .day-cell.today { outline: 2px solid var(--purple); outline-offset: 2px; }
-  .day-cell.done::after { content: ''; width: 4px; height: 4px; border-radius: 50%; position: absolute; bottom: 3px; background: rgba(255,255,255,0.6); }
-  .day-cell.fad-descanso.done::after, .day-cell.cal-descanso.done::after { background: var(--text3); }
-  .dosis-badge { font-size: 8px; line-height: 1; margin-top: 1px; opacity: 0.85; }
-  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
-  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
-  .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+    a {
+      color: var(--purple);
+      text-decoration: none;
+      transition: opacity var(--transition-speed);
+    }
+    a:hover {
+      opacity: 0.8;
+    }
 
-  /* MODAL DOSIS */
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(26,24,20,0.5); z-index: 200; align-items: flex-end; justify-content: center; }
-  .modal-overlay.open { display: flex; }
-  .modal-box { background: var(--white); border-radius: var(--radius) var(--radius) 0 0; padding: 24px 20px 36px; width: 100%; max-width: 480px; animation: slideUp 0.2s ease; }
-  @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-  .modal-title { font-family: 'DM Serif Display', serif; font-size: 19px; margin-bottom: 3px; }
-  .modal-sub { font-size: 13px; color: var(--text2); margin-bottom: 18px; }
-  .dosis-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 14px; }
-  .dosis-input-wrap { flex: 1; }
-  .unit-toggle { display: flex; border: 1px solid var(--border2); border-radius: var(--radius-sm); overflow: hidden; height: 42px; align-self: flex-end; }
-  .unit-btn { padding: 0 18px; font-size: 13px; font-family: 'DM Sans', sans-serif; background: transparent; border: none; cursor: pointer; color: var(--text2); font-weight: 500; transition: all 0.15s; }
-  .unit-btn.active { background: var(--purple); color: white; }
-  .modal-actions { display: flex; gap: 8px; margin-top: 8px; }
+    /* ==========================================================================
+       2. ESTRUCTURA & COMPONENTES COMUNES
+       ========================================================================== */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background-color: var(--bg-surface);
+      border-bottom: 1px solid var(--border-soft);
+      padding: 0.8rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background-color var(--transition-speed), border-color var(--transition-speed);
+    }
 
-  /* PERSONAS */
-  .persona-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: opacity 0.15s; }
-  .persona-row:last-child { border-bottom: none; }
-  .persona-row:hover { opacity: 0.75; }
-  .avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; flex-shrink: 0; }
-  .persona-info { flex: 1; }
-  .persona-name { font-size: 14px; font-weight: 500; color: var(--text); }
-  .persona-meta { font-size: 12px; color: var(--text2); margin-top: 1px; }
-  .progress-mini { height: 3px; background: var(--bg2); border-radius: 2px; margin-top: 5px; }
-  .progress-fill { height: 100%; background: var(--purple); border-radius: 2px; }
-  .persona-last { font-size: 11px; color: var(--text3); flex-shrink: 0; }
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    
+    .logo-savia {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      letter-spacing: 1px;
+      color: var(--purple);
+    }
 
-  .link-box { background: var(--bg2); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13px; color: var(--purple-text); word-break: break-all; margin-top: 10px; border: 1px solid var(--border); font-family: monospace; font-weight: 500; }
+    .tag-savia {
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 2px;
+      background-color: var(--purple-light);
+      color: var(--purple-text);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
 
-  .welcome { text-align: center; padding: 40px 0 28px; }
-  .welcome-circle { width: 64px; height: 64px; border-radius: 50%; background: var(--purple-light); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
-  .welcome h1 { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--text); margin-bottom: 8px; }
-  .welcome p { font-size: 14px; color: var(--text2); line-height: 1.6; max-width: 300px; margin: 0 auto; }
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
 
-  .stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-bottom: 16px; }
-  .stat-card { background: var(--bg2); border-radius: var(--radius-sm); padding: 14px 16px; }
-  .stat-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
-  .stat-value { font-size: 22px; font-weight: 300; color: var(--text); font-family: 'DM Serif Display', serif; }
+    .btn-icon {
+      background: none;
+      border: none;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      transition: background-color 0.2s, color 0.2s;
+    }
+    .btn-icon:hover {
+      background-color: var(--border-soft);
+      color: var(--text-primary);
+    }
 
-  .today-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
-  .today-date { font-size: 13px; color: var(--text2); margin-bottom: 2px; }
-  .today-day { font-family: 'DM Serif Display', serif; font-size: 24px; color: var(--text); }
-  .today-intent { font-size: 13px; color: var(--text2); font-style: italic; border-top: 1px solid var(--border); padding-top: 10px; margin-top: 10px; line-height: 1.5; }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.5rem;
+      width: 100%;
+      flex: 1;
+    }
 
-  .empty { text-align: center; padding: 48px 20px; color: var(--text3); }
-  .empty p { font-size: 14px; margin-top: 8px; }
+    /* Cards */
+    .card {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-soft);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-subtle);
+      transition: background-color var(--transition-speed), border-color var(--transition-speed), transform 0.2s;
+    }
 
-  .dim-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-  .dim-bar-label { font-size: 11px; color: var(--text2); width: 90px; text-align: right; flex-shrink: 0; }
-  .dim-bar-track { flex: 1; height: 5px; background: var(--bg2); border-radius: 3px; }
-  .dim-bar-fill { height: 100%; background: var(--purple); border-radius: 3px; }
-  .dim-bar-val { font-size: 11px; color: var(--text3); width: 24px; }
+    /* Botones Premium */
+    .btn {
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      font-weight: 500;
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease-in-out;
+    }
+    
+    .btn-primary {
+      background-color: var(--purple);
+      color: var(--white);
+    }
+    .btn-primary:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+    .btn-primary:active {
+      transform: translateY(0);
+    }
 
-  .loading-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; flex-direction: column; gap: 14px; color: var(--text3); font-size: 14px; }
-  .spinner { width: 28px; height: 28px; border: 2px solid var(--bg2); border-top-color: var(--purple); border-radius: 50%; animation: spin 0.7s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+    .btn-secondary {
+      background-color: var(--bg-surface);
+      border-color: var(--border-mid);
+      color: var(--text-primary);
+    }
+    .btn-secondary:hover {
+      background-color: var(--border-soft);
+    }
 
-  /* VISTA ADMIN PARTICIPANTE */
-  .admin-header { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
-  .admin-avatar { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 500; flex-shrink: 0; }
-  .admin-nombre { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--text); }
-  .admin-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
-  .back-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text2); cursor: pointer; margin-bottom: 16px; padding: 6px 0; }
-  .back-btn:hover { color: var(--purple); }
-  .ficha-row { display: flex; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
-  .ficha-row:last-child { border-bottom: none; }
-  .ficha-key { color: var(--text2); width: 180px; flex-shrink: 0; font-size: 13px; }
-  .ficha-val { color: var(--text); flex: 1; line-height: 1.5; }
-  .registro-item { padding: 14px 0; border-bottom: 1px solid var(--border); }
-  .registro-item:last-child { border-bottom: none; }
-  .registro-dia { font-family: 'DM Serif Display', serif; font-size: 15px; color: var(--text); margin-bottom: 10px; }
-  .registro-campo { margin-bottom: 8px; }
-  .registro-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 2px; }
-  .registro-texto { font-size: 13px; color: var(--text); line-height: 1.6; }
-  .estado-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-  .estado-item { background: var(--bg2); border-radius: var(--radius-sm); padding: 10px 12px; }
-  .estado-dim { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
-  .estado-score { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--purple); }
-  .dosis-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
-  .dosis-item:last-child { border-bottom: none; }
-  .dosis-dia-badge { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; flex-shrink: 0; }
-  .dosis-dia-badge.cal { background: var(--red-light); color: var(--red-text); }
-  .dosis-dia-badge.fad { background: var(--purple-light); color: var(--purple-text); }
-  .dosis-info { flex: 1; }
-  .dosis-valor { font-size: 15px; font-weight: 500; color: var(--text); }
-  .dosis-nota-txt { font-size: 12px; color: var(--text2); margin-top: 2px; }
-  .tag-si { display: inline-block; background: #E8F5EE; color: #1A5C37; font-size: 11px; padding: 2px 8px; border-radius: 10px; margin: 2px; }
-  .tag-no { display: inline-block; background: var(--bg2); color: var(--text3); font-size: 11px; padding: 2px 8px; border-radius: 10px; margin: 2px; }
-  .empty-tab { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 13px; }
+    .btn-danger {
+      background-color: var(--red-light);
+      border-color: var(--red);
+      color: var(--red);
+    }
+    .btn-danger:hover {
+      background-color: var(--red);
+      color: #FFFFFF;
+    }
 
-  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--text); color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 300; }
-  .toast.show { opacity: 1; }
+    /* Tabs premium estilo Pill */
+    .tabs-pills {
+      display: inline-flex;
+      background-color: var(--border-soft);
+      padding: 0.25rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      width: 100%;
+      overflow-x: auto;
+    }
 
-  @media (max-width: 480px) {
-    .content, .content-wide { padding: 20px 14px 60px; }
-    .topbar { padding: 12px 14px; }
-  }
-</style>
+    .tab-pill {
+      flex: 1;
+      text-align: center;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      border: none;
+      background: none;
+      font-weight: 500;
+      font-size: 0.9rem;
+      cursor: pointer;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .tab-pill.active {
+      background-color: var(--bg-surface);
+      color: var(--text-primary);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    /* Inputs Premium */
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+    .form-label {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-weight: 500;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    .form-control {
+      width: 100%;
+      padding: 0.7rem 0.9rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-mid);
+      background-color: var(--bg-surface);
+      color: var(--text-primary);
+      transition: border-color 0.2s;
+      outline: none;
+    }
+    .form-control:focus {
+      border-color: var(--purple);
+    }
+    textarea.form-control {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    /* Toggles custom */
+    .toggle-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 0;
+      border-bottom: 1px solid var(--border-soft);
+    }
+    .toggle-wrapper:last-child {
+      border-bottom: none;
+    }
+    .toggle-label-desc {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--border-mid);
+      transition: .3s;
+      border-radius: 24px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: var(--purple);
+    }
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    /* Escala 1-5 Dots circulares */
+    .dots-scale {
+      display: flex;
+      gap: 0.8rem;
+      align-items: center;
+      margin-top: 0.5rem;
+    }
+
+    .dot-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--border-mid);
+      background-color: var(--bg-surface);
+      color: var(--text-secondary);
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      font-size: 0.85rem;
+    }
+    
+    .dot-btn:hover {
+      border-color: var(--purple);
+      color: var(--purple);
+    }
+
+    .dot-btn.active {
+      background-color: var(--purple);
+      color: var(--white);
+      border-color: var(--purple);
+    }
+
+    /* Grilla de antecedentes / Toggles */
+    .grid-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+    }
+    @media (max-width: 600px) {
+      .grid-2col {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Toasts de confirmación */
+    #toast-container {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background-color: var(--text-primary);
+      color: var(--bg-surface);
+      padding: 0.8rem 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      z-index: 1000;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      pointer-events: none;
+    }
+    #toast-container.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* Modal Slide-Up de Dosis */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.4);
+      z-index: 999;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+    .modal-backdrop.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-slide-up {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background-color: var(--bg-surface);
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+      box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
+      z-index: 1000;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 2rem;
+    }
+    .modal-slide-up.show {
+      transform: translateY(0);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--text-secondary);
+    }
+
+    /* Indicador de Guardado de Dosis */
+    .save-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+    .save-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--border-mid);
+      display: inline-block;
+    }
+    .save-dot.syncing {
+      background-color: var(--purple);
+      animation: blink 1s infinite alternate;
+    }
+    .save-dot.success {
+      background-color: var(--green);
+    }
+
+    @keyframes blink {
+      0% { opacity: 0.3; }
+      100% { opacity: 1; }
+    }
+
+    /* ==========================================================================
+       3. CALENDARIO ESTILOS
+       ========================================================================== */
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.6rem;
+      margin-top: 1rem;
+    }
+
+    .calendar-header-day {
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 0.4rem;
+    }
+
+    .calendar-cell {
+      aspect-ratio: 1;
+      border-radius: 8px;
+      border: 1px solid var(--border-soft);
+      padding: 0.4rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      background-color: var(--bg-surface);
+      transition: all 0.2s;
+    }
+
+    .cell-number {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .cell-label {
+      font-size: 0.65rem;
+      font-weight: 500;
+      text-align: center;
+      padding: 0.1rem 0.2rem;
+      border-radius: 4px;
+      display: block;
+      width: 100%;
+    }
+
+    /* Clases de tipos de día de calendario */
+    .cell-cal-toma {
+      border-color: var(--red);
+      cursor: pointer;
+    }
+    .cell-cal-toma .cell-label {
+      background-color: var(--red-light);
+      color: var(--red);
+    }
+    .cell-cal-toma:hover {
+      background-color: var(--red-light);
+    }
+
+    .cell-cal-descanso {
+      background-color: var(--bg-app);
+      border-style: dashed;
+    }
+    .cell-cal-descanso .cell-label {
+      color: var(--text-tertiary);
+    }
+
+    .cell-transicion-descanso {
+      background-color: var(--border-soft);
+      opacity: 0.8;
+    }
+    .cell-transicion-descanso .cell-label {
+      color: var(--text-secondary);
+    }
+
+    .cell-fad-toma {
+      border-color: var(--purple);
+      cursor: pointer;
+    }
+    .cell-fad-toma .cell-label {
+      background-color: var(--purple-light);
+      color: var(--purple);
+    }
+    .cell-fad-toma:hover {
+      background-color: var(--purple-light);
+    }
+
+    .cell-fad-descanso {
+      background-color: var(--bg-app);
+      border-style: dashed;
+    }
+    .cell-fad-descanso .cell-label {
+      color: var(--text-tertiary);
+    }
+
+    .cell-disabled {
+      cursor: not-allowed;
+    }
+
+    .cell-badge-registered {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 6px;
+      height: 6px;
+      background-color: var(--green);
+      border-radius: 50%;
+    }
+
+    .cell-badge-dose {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--purple-text);
+      pointer-events: none;
+    }
+
+    /* ==========================================================================
+       4. ESTADÍSTICAS Y PANEL ADMIN
+       ========================================================================== */
+    .admin-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 900px) {
+      .admin-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .participant-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.8rem 1rem;
+      border-bottom: 1px solid var(--border-soft);
+      cursor: pointer;
+      border-radius: 8px;
+      transition: background-color 0.2s;
+    }
+    .participant-row:hover {
+      background-color: var(--border-soft);
+    }
+    .participant-row.active {
+      background-color: var(--purple-light);
+      border-color: var(--purple-light);
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 6px;
+      background-color: var(--border-soft);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 0.3rem;
+    }
+    .progress-bar {
+      height: 100%;
+      background-color: var(--purple);
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+
+    /* Intención fija */
+    .fixed-intention-box {
+      background-color: var(--purple-light);
+      border-left: 4px solid var(--purple);
+      padding: 1rem;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Guías de sesión y Acordeón */
+    .session-item {
+      border: 1px solid var(--border-soft);
+      border-radius: 8px;
+      margin-bottom: 0.6rem;
+      overflow: hidden;
+    }
+    .session-trigger {
+      width: 100%;
+      padding: 0.8rem 1.2rem;
+      text-align: left;
+      background-color: var(--bg-surface);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 500;
+    }
+    .session-trigger:hover {
+      background-color: var(--border-soft);
+    }
+    .session-trigger.current-highlight {
+      border-left: 4px solid var(--purple);
+      background-color: var(--purple-light);
+    }
+    .session-content {
+      padding: 1.2rem;
+      background-color: var(--bg-surface);
+      border-top: 1px solid var(--border-soft);
+      display: none;
+      font-size: 0.9rem;
+    }
+    .session-content.show {
+      display: block;
+    }
+    .session-content ol, .session-content ul {
+      margin-left: 1.5rem;
+      margin-top: 0.5rem;
+    }
+    .session-content li {
+      margin-bottom: 0.4rem;
+    }
+
+    /* SVGs interactivos de Gráficos */
+    .svg-chart-container {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      background: var(--bg-surface);
+      border-radius: 8px;
+      padding: 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Ayuda Contextual */
+    .help-tooltip-trigger {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      background-color: var(--border-mid);
+      color: var(--text-secondary);
+      border-radius: 50%;
+      font-size: 0.65rem;
+      font-weight: 700;
+      cursor: help;
+      margin-left: 0.3rem;
+      vertical-align: middle;
+      position: relative;
+    }
+    .help-tooltip-trigger:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: var(--text-primary);
+      color: var(--bg-surface);
+      padding: 0.5rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      width: 200px;
+      white-space: normal;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 100;
+      font-weight: normal;
+    }
+
+    .badge-estado {
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+    .badge-estado.activa {
+      background-color: var(--purple-light);
+      color: var(--purple-text);
+    }
+    .badge-estado.completada {
+      background-color: var(--green-light);
+      color: var(--green);
+    }
+
+  </style>
 </head>
 <body>
-<div id="app">
 
-  <div class="topbar">
-    <div class="topbar-logo">Bitácora</div>
-    <div class="topbar-sub" id="topbar-sub">—</div>
-    <!-- FIX 6: nav solo visible en modo admin -->
-    <div class="topbar-nav" id="nav-admin" style="display:none;">
-      <button class="tb-btn" onclick="showScreen('panel')">Panel</button>
-      <button class="tb-btn primary" onclick="showScreen('nueva')">+ Nueva</button>
+  <!-- 1. TOPBAR STICKY -->
+  <header class="topbar">
+    <div class="logo-container">
+      <span class="logo-savia">Savia</span>
+      <span class="tag-savia">Bitácora</span>
     </div>
-  </div>
-
-  <!-- LOADING -->
-  <div id="screen-loading" class="screen active">
-    <div class="loading-screen"><div class="spinner"></div>Cargando...</div>
-  </div>
-
-  <!-- ===== PANEL ===== -->
-  <div id="screen-panel" class="screen">
-    <div class="content-wide">
-      <div class="tabs">
-        <div class="tab active" onclick="panelTab('personas',this)">Personas</div>
-        <div class="tab" onclick="panelTab('resumen',this)">Resumen</div>
-      </div>
-      <div id="ptab-personas">
-        <div class="stat-grid">
-          <div class="stat-card"><div class="stat-label">Activas</div><div class="stat-value" id="stat-activas">—</div></div>
-          <div class="stat-card"><div class="stat-label">Completadas</div><div class="stat-value" id="stat-comp">—</div></div>
-        </div>
-        <div class="card" id="personas-list"><div class="empty"><p>Cargando personas...</p></div></div>
-      </div>
-      <div id="ptab-resumen" style="display:none;">
-        <div class="stat-grid">
-          <div class="stat-card"><div class="stat-label">Activas</div><div class="stat-value" id="stat-activas2">—</div></div>
-          <div class="stat-card"><div class="stat-label">Completadas</div><div class="stat-value" id="stat-comp2">—</div></div>
-        </div>
-        <div class="sect">Evolución por dimensión (promedio)</div>
-        <div class="card" id="dim-bars-panel"></div>
-      </div>
+    <div class="topbar-actions">
+      <span id="role-badge" class="tag-savia" style="background-color: var(--border-mid); color: var(--text-primary);">Cargando...</span>
+      
+      <!-- Sol / Luna Dark Mode -->
+      <button id="btn-theme-toggle" class="btn-icon" aria-label="Alternar modo oscuro">
+        <!-- SVG Sol -->
+        <svg id="svg-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <!-- SVG Luna -->
+        <svg id="svg-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
     </div>
-  </div>
+  </header>
 
-  <!-- ===== NUEVA ===== -->
-  <div id="screen-nueva" class="screen">
-    <div class="content">
-      <div class="card-title" style="margin-bottom:4px;">Nueva bitácora</div>
-      <div class="card-sub" style="margin-bottom:20px;">Solo el nombre. La persona completa el resto desde su link.</div>
-      <div class="card">
-        <div class="field">
-          <label>Nombre de la persona</label>
-          <input type="text" id="new-nombre" placeholder="ej. María López">
-        </div>
-      </div>
-      <button class="btn primary full" onclick="generarLink()">Generar link</button>
-      <div id="link-result" style="display:none;margin-top:16px;">
-        <div class="sect">Link generado</div>
-        <div class="link-box" id="link-texto"></div>
-        <div style="font-size:12px;color:var(--text3);margin-top:8px;text-align:center;">Compartí por email o WhatsApp</div>
-        <button class="btn full" style="margin-top:8px;" onclick="volverAlPanel()">← Volver al panel</button>
-      </div>
+  <!-- 2. MAIN CONTAINER -->
+  <main class="container" id="app-root">
+    <div style="display: flex; justify-content: center; align-items: center; min-height: 400px; flex-direction: column; gap: 1rem;">
+      <h2 class="font-display">Cargando aplicación...</h2>
+      <p style="color: var(--text-secondary);">Bitácora SAVIA v4.0</p>
     </div>
-  </div>
+  </main>
 
-  <!-- ===== ADMIN: VER PARTICIPANTE ===== -->
-  <div id="screen-admin-persona" class="screen">
-    <div class="content-wide">
-      <div class="back-btn" onclick="volverAlPanelDesdePersona()">← Volver al panel</div>
-      <div class="admin-header">
-        <div class="admin-avatar" id="ap-avatar"></div>
-        <div>
-          <div class="admin-nombre" id="ap-nombre">—</div>
-          <div class="admin-meta" id="ap-meta">—</div>
-        </div>
+  <!-- 3. SLIDE-UP DOSE MODAL -->
+  <div class="modal-backdrop" id="dose-modal-backdrop"></div>
+  <div class="modal-slide-up" id="dose-modal">
+    <div class="modal-header">
+      <div>
+        <h3 class="font-display" id="dose-modal-title">Registrar Toma</h3>
+        <span class="save-indicator">
+          <span class="save-dot" id="dose-save-dot"></span>
+          <span id="dose-save-text">Autoguardado</span>
+        </span>
       </div>
-      <div class="tabs" id="ap-tabs">
-        <div class="tab active" onclick="apTab(&apos;ficha&apos;,this)">Ficha</div>
-        <div class="tab" onclick="apTab(&apos;registros&apos;,this)">Registros</div>
-        <div class="tab" onclick="apTab(&apos;estados&apos;,this)">Estados</div>
-        <div class="tab" onclick="apTab(&apos;dosis&apos;,this)">Dosis</div>
-      </div>
-      <div id="aptab-ficha"><div class="card" id="ap-ficha-content"></div></div>
-      <div id="aptab-registros" style="display:none;"><div class="card" id="ap-registros-content"></div></div>
-      <div id="aptab-estados" style="display:none;"><div id="ap-estados-content"></div></div>
-      <div id="aptab-dosis" style="display:none;"><div class="card" id="ap-dosis-content"></div></div>
+      <button class="modal-close" id="btn-close-dose-modal">&times;</button>
     </div>
-  </div>
-
-  <!-- ===== USUARIO ===== -->
-  <div id="screen-usuario" class="screen">
-    <div class="content">
-      <div class="tabs" id="usuario-tabs">
-        <div class="tab active" onclick="usuarioTab('ficha',this)">Ficha</div>
-        <div class="tab" onclick="usuarioTab('hoy',this)">Hoy</div>
-        <div class="tab" onclick="usuarioTab('calendario',this)">Calendario</div>
-        <div class="tab" onclick="usuarioTab('estados',this)">Estados</div>
-      </div>
-
-      <!-- FICHA -->
-      <div id="utab-ficha">
-        <div id="ficha-form">
-          <div class="welcome">
-            <div class="welcome-circle">
-              <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
-                <circle cx="13" cy="13" r="10" stroke="#534AB7" stroke-width="1.5"/>
-                <path d="M13 9v4l3 2" stroke="#534AB7" stroke-width="1.5" stroke-linecap="round"/>
-              </svg>
-            </div>
-            <h1 id="welcome-nombre">Hola</h1>
-            <p>Antes de empezar, completá tu ficha. Solo vos y tu acompañante tienen acceso.</p>
-          </div>
-          <div class="sect">¿Cuándo empezás?</div>
-          <div class="card">
-            <div class="field">
-              <label>¿Cuándo empezás tu semana de calibración?</label>
-              <input type="date" id="fecha-calibracion">
-              <div class="hint">Tu calendario se genera automáticamente desde este día.</div>
-            </div>
-          </div>
-          <div class="sect">Datos generales</div>
-          <div class="card">
-            <div class="field"><label>Fecha de nacimiento</label><input type="date" id="ficha-fnac"></div>
-            <div class="field"><label>Peso (kg)</label><input type="number" id="ficha-peso" placeholder="ej. 65"></div>
-            <!-- FIX 3 -->
-            <div class="field"><label>Altura (cm)</label><input type="number" id="ficha-altura" placeholder="ej. 168"></div>
-          </div>
-          <div class="sect">Intención</div>
-          <div class="card">
-            <div class="field"><label>¿Qué querés trabajar en este proceso?</label><textarea id="ficha-intencion" placeholder="Escribí tu intención con la mayor honestidad posible..."></textarea></div>
-            <div class="field"><label>Beneficios que esperás</label><textarea id="ficha-beneficios"></textarea></div>
-            <div class="field"><label>Desafíos que anticipás</label><textarea id="ficha-desafios"></textarea></div>
-          </div>
-          <div class="sect">Antecedentes de salud</div>
-          <div class="card" id="anamnesis-card"></div>
-          <div class="sect">Consumo de sustancias (últimos 3 meses)</div>
-          <div class="card" id="sustancias-card"></div>
-          <div class="sect">Medicamentos y suplementos</div>
-          <div class="card">
-            <div class="field"><textarea id="ficha-medicamentos" placeholder="Con o sin receta..."></textarea></div>
-          </div>
-          <button class="btn primary full" onclick="confirmarFicha()">Confirmar ficha y empezar</button>
+    <div class="modal-body">
+      <input type="hidden" id="dose-day-idx">
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="dose-value">Cantidad <span class="help-tooltip-trigger" data-tooltip="Ingresa el valor numérico de tu dosis">?</span></label>
+          <input type="number" step="0.01" id="dose-value" class="form-control" placeholder="Ej: 0.1">
         </div>
-        <div id="ficha-ok" style="display:none;">
-          <div class="welcome">
-            <div class="welcome-circle" style="background:var(--green-light);">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M5 13l4 4L19 7" stroke="#2D7A4F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <h1>Ficha guardada</h1>
-            <p>Tu bitácora está lista. Registrá tu primer día cuando quieras.</p>
-          </div>
-          <button class="btn primary full" onclick="usuarioTab('hoy', document.querySelectorAll('#usuario-tabs .tab')[1])">Ir al registro de hoy →</button>
+        <div class="form-group">
+          <label class="form-label" for="dose-unit">Unidad</label>
+          <select id="dose-unit" class="form-control">
+            <option value="mg">MG</option>
+            <option value="ml">ML</option>
+          </select>
         </div>
       </div>
 
-      <!-- HOY -->
-      <div id="utab-hoy" style="display:none;">
-        <div class="card">
-          <div class="today-header">
-            <div>
-              <div class="today-date" id="hoy-fecha-label"></div>
-              <div class="today-day" id="hoy-dia-num">Día —</div>
-            </div>
-            <span class="chip chip-descanso" id="hoy-chip">—</span>
-          </div>
-          <div class="today-intent" id="hoy-intencion" style="display:none;"></div>
-        </div>
-        <div class="sect">Registro del día</div>
-        <div class="card">
-          <div class="field"><label>¿Cómo te sentiste hoy?</label><textarea id="hoy-sentiste" placeholder="Escribí libremente..."></textarea></div>
-          <div class="field"><label>¿Algo distinto a lo habitual?</label><textarea id="hoy-distinto" placeholder="Pensamientos, sensaciones, percepciones..."></textarea></div>
-          <div class="field"><label>Alimentación y energía</label><textarea id="hoy-alimentacion" placeholder="¿Tuvo impacto en tu proceso hoy?"></textarea></div>
-          <div class="field"><label>Sueños o sincronicidades</label><textarea id="hoy-suenos" placeholder="¿Les encontrás algún significado?"></textarea></div>
-          <div class="field"><label>Cambios respecto a medicación o padecimiento</label><textarea id="hoy-medicacion" placeholder="Si es tu caso..."></textarea></div>
-          <div class="field"><label>Sexualidad</label><textarea id="hoy-sexualidad" placeholder="Cambios en valoración, libido, perspectiva, vitalidad..."></textarea></div>
-        </div>
-        <div class="sect">Dosis de hoy</div>
-        <div class="card">
-          <div class="field"><label>¿Por qué esta dosis hoy?</label><textarea id="hoy-dosis-nota" placeholder="Decisión de dosis o cualquier nota sobre el cambio..."></textarea></div>
-        </div>
-        <!-- FIX 4: botón conectado a Firebase -->
-        <button class="btn primary full" onclick="guardarHoy()">Guardar registro del día</button>
-      </div>
-
-      <!-- CALENDARIO -->
-      <div id="utab-calendario" style="display:none;">
-        <div class="legend">
-          <div class="legend-item"><div class="legend-dot" style="background:var(--red);"></div>Toma · calibración</div>
-          <div class="legend-item"><div class="legend-dot" style="background:var(--purple);"></div>Toma · Fadiman</div>
-          <div class="legend-item"><div class="legend-dot" style="background:var(--bg2);border:1px solid var(--border2);"></div>Descanso</div>
-        </div>
-        <div id="cal-container"></div>
-      </div>
-
-      <!-- ESTADOS -->
-      <div id="utab-estados" style="display:none;">
-        <div style="font-size:13px;color:var(--text2);margin-bottom:16px;">Valorá cada dimensión del 1 al 5.</div>
-        <div class="card" id="scale-container"></div>
-        <!-- FIX 5: botón conectado a Firebase -->
-        <button class="btn primary full" onclick="guardarEstados()">Guardar estados</button>
+      <div class="form-group">
+        <label class="form-label" for="dose-note">Nota de Dosis <span class="help-tooltip-trigger" data-tooltip="¿Por qué esta dosis hoy? ¿Cómo te sentís al tomarla?">?</span></label>
+        <textarea id="dose-note" class="form-control" placeholder="Escribí notas relevantes respecto a esta toma de hoy..."></textarea>
       </div>
     </div>
   </div>
 
-</div><!-- /app -->
-
-<!-- MODAL DOSIS (FIX 2) -->
-<div class="modal-overlay" id="dosis-modal" onclick="if(event.target===this)cerrarModal()">
-  <div class="modal-box">
-    <div class="modal-title" id="modal-titulo">Día —</div>
-    <div class="modal-sub" id="modal-tipo">Toma</div>
-    <div class="dosis-row">
-      <div class="dosis-input-wrap">
-        <label>Dosis</label>
-        <input type="number" id="modal-dosis-val" placeholder="ej. 0.1" step="0.01" min="0">
-      </div>
-      <div class="unit-toggle">
-        <button class="unit-btn active" id="unit-mg" onclick="setUnit('mg')">mg</button>
-        <button class="unit-btn" id="unit-ml" onclick="setUnit('ml')">ml</button>
-      </div>
-    </div>
-    <div class="field">
-      <label>Nota (opcional)</label>
-      <textarea id="modal-nota" placeholder="Razón del cambio u observaciones..." style="min-height:56px;"></textarea>
-    </div>
-    <div class="modal-actions">
-      <button class="btn full" onclick="cerrarModal()">Cancelar</button>
-      <button class="btn primary full" onclick="guardarDosis()">Guardar</button>
-    </div>
+  <!-- 4. TOAST CONTAINER -->
+  <div id="toast-container">
+    <span id="toast-icon">✓</span>
+    <span id="toast-message">Operación realizada con éxito</span>
   </div>
-</div>
 
-<!-- TOAST -->
-<div class="toast" id="toast"></div>
+  <!-- ==========================================================================
+     5. LÓGICA PRINCIPAL (JAVASCRIPT)
+     ========================================================================== */ -->
+  <script type="module">
+    // Importar SDKs de Firebase desde CDN de Google
+    import { initializeApp } from "firebase/app";
+    import { 
+      getFirestore, 
+      doc, 
+      getDoc, 
+      setDoc, 
+      updateDoc, 
+      collection, 
+      getDocs, 
+      deleteDoc, 
+      onSnapshot 
+    } from "firebase/firestore";
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+    // 5.1 Configuración de Firebase (bitacora-microdosis-50db0)
+    const firebaseConfig = {
+      apiKey: "AIzaSyC123-BitacoraSaviaFirebaseKeyPlaceholder",
+      authDomain: "bitacora-microdosis-50db0.firebaseapp.com",
+      projectId: "bitacora-microdosis-50db0",
+      storageBucket: "bitacora-microdosis-50db0.appspot.com",
+      messagingSenderId: "123456789012",
+      appId: "1:123456789012:web:a1b2c3d4e5f6g7h8i9j0k"
+    };
 
-const firebaseConfig = {
-  apiKey: "AIzaSyB9Npxbks3QEkri97KqdW8rDEp47jwLskk",
-  authDomain: "bitacora-microdosis-50db0.firebaseapp.com",
-  projectId: "bitacora-microdosis-50db0",
-  storageBucket: "bitacora-microdosis-50db0.firebasestorage.app",
-  messagingSenderId: "245606483831",
-  appId: "1:245606483831:web:6671d2a9311f5d2b874372"
-};
-const fbApp = initializeApp(firebaseConfig);
-const db = getFirestore(fbApp);
+    let db;
+    let offlineMode = false;
 
-// ─── CONSTANTES ───────────────────────────────────────────────────────────────
-const DIMS = ['Calidad de sueño','Energía','Ánimo','Autoeficacia','Tranquilidad','Amabilidad','Foco','Creatividad','Capacidad cognitiva','Autoconocimiento','Contemplación','Conexión','Espiritualidad'];
-const ANT  = ['Fobias','Insomnio','TOC','Tratamiento por depresión','Intento de suicidio','Trastornos alimenticios','Esquizofrenia','Abuso sexual','Cardiopatías','Diabetes','Colesterol elevado','Depresión','Ansiedad','Estrés','Asma','Adicciones'];
-const SUST = ['Cocaína','Marihuana','Anfetaminas','Opiáceos','Mescalina','Psilocibina','Alcohol'];
-const DAY_NAMES = ['L','M','M','J','V','S','D'];
-const COLORS = [['#EEEDFE','#3C3489'],['#FAEAEA','#8B2828'],['#FBEAF0','#72243E'],['#E8F5EE','#1A5C37'],['#FFF3E0','#7A4A00'],['#E3F2FD','#1565C0']];
-
-// ─── STATE ────────────────────────────────────────────────────────────────────
-let BID = null;       // bitacora ID del usuario actual
-let BDATA = null;     // datos del documento
-let dosisMap = {};    // { dayIdx: {valor, unidad, nota} }
-let modalDayIdx = null;
-let modalUnit = 'mg';
-
-// ─── TOAST ────────────────────────────────────────────────────────────────────
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
-}
-
-// ─── INIT ─────────────────────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', async () => {
-  const params = new URLSearchParams(window.location.search);
-  const bid = params.get('b');
-
-  if (bid) {
-    // ── FIX 1 + FIX 6: modo usuario, sin nav admin ──
-    BID = bid;
-    document.getElementById('nav-admin').style.display = 'none';
-    await cargarUsuario(bid);
-  } else {
-    // ── modo admin ──
-    document.getElementById('nav-admin').style.display = 'flex';
-    document.getElementById('topbar-sub').textContent = 'Panel de seguimiento';
-    await loadPanel();
-  }
-});
-
-// ─── MODO USUARIO ─────────────────────────────────────────────────────────────
-async function cargarUsuario(bid) {
-  try {
-    const snap = await getDoc(doc(db, 'bitacoras', bid));
-    if (!snap.exists()) {
-      mostrarError('Bitácora no encontrada. Verificá el link con tu acompañante.');
-      return;
-    }
-    BDATA = snap.data();
-    dosisMap = BDATA.dosis || {};
-
-    document.getElementById('topbar-sub').textContent = BDATA.nombre || 'Mi bitácora';
-    document.getElementById('welcome-nombre').textContent = 'Hola, ' + (BDATA.nombre || '');
-
-    buildAnamnesis();
-    buildSustancias();
-
-    if (BDATA.fichaCompletada) {
-      document.getElementById('ficha-form').style.display = 'none';
-      document.getElementById('ficha-ok').style.display = 'block';
-    }
-
-    buildHoy();
-    showScreen('usuario');
-  } catch(e) {
-    mostrarError('Error: ' + e.message);
-  }
-}
-
-function mostrarError(msg) {
-  document.getElementById('screen-loading').innerHTML =
-    `<div class="loading-screen" style="color:var(--text2);gap:16px;">
-      <div style="font-size:36px;">⚠️</div>
-      <div style="font-size:14px;text-align:center;max-width:280px;">${msg}</div>
-     </div>`;
-  document.getElementById('screen-loading').classList.add('active');
-}
-
-// ─── MODO ADMIN: PANEL ────────────────────────────────────────────────────────
-// FIX 1B: cargar personas reales desde Firestore
-async function loadPanel() {
-  showScreen('panel');
-  try {
-    const snap = await getDocs(collection(db, 'bitacoras'));
-    const docs = [];
-    snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
-
-    const activas = docs.filter(d => d.estado !== 'completada').length;
-    const compl   = docs.filter(d => d.estado === 'completada').length;
-
-    ['stat-activas','stat-activas2'].forEach(id => { const el = document.getElementById(id); if(el) el.textContent = activas; });
-    ['stat-comp','stat-comp2'].forEach(id => { const el = document.getElementById(id); if(el) el.textContent = compl; });
-
-    const list = document.getElementById('personas-list');
-    if (!docs.length) {
-      list.innerHTML = '<div class="empty"><p>Sin bitácoras aún. Creá la primera con "+ Nueva".</p></div>';
-      return;
-    }
-
-    list.innerHTML = docs.map((d, i) => {
-      const [bg, fg] = COLORS[i % COLORS.length];
-      const initials = (d.nombre || '?').split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
-      const dias = d.diasRegistrados || 0;
-      const pct  = Math.min(100, Math.round(dias / 42 * 100));
-      const hace = d.ultimoRegistro ? tiempoDesde(d.ultimoRegistro) : '—';
-      const meta = d.fichaCompletada ? `Día ${dias} · ${d.estado === 'completada' ? 'Completada' : 'En proceso'}` : 'Pendiente de ficha';
-      const link = `${location.origin}${location.pathname}?b=${d.id}`;
-      return `
-        <div class="persona-row" onclick="verPersona('${d.id}','${bg}','${fg}','${initials}')">
-          <div class="avatar" style="background:${bg};color:${fg};">${initials}</div>
-          <div class="persona-info">
-            <div class="persona-name">${d.nombre || 'Sin nombre'}</div>
-            <div class="persona-meta">${meta}</div>
-            <div class="progress-mini"><div class="progress-fill" style="width:${pct}%"></div></div>
-          </div>
-          <div class="persona-last">${hace}</div>
-        </div>`;
-    }).join('');
-  } catch(e) {
-    document.getElementById('personas-list').innerHTML = `<div class="empty"><p>Error al cargar: ${e.message}</p></div>`;
-  }
-}
-
-function tiempoDesde(iso) {
-  const m = Math.floor((Date.now() - new Date(iso)) / 60000);
-  if (m < 60) return m + ' min';
-  const h = Math.floor(m / 60);
-  if (h < 24) return h + 'h';
-  const d = Math.floor(h / 24);
-  return d === 1 ? 'ayer' : d + ' días';
-}
-
-window.volverAlPanel = async function() {
-  document.getElementById('link-result').style.display = 'none';
-  document.getElementById('new-nombre').value = '';
-  await loadPanel();
-  showScreen('panel');
-}
-
-// ─── NUEVA BITÁCORA ───────────────────────────────────────────────────────────
-window.generarLink = async function() {
-  const nombre = document.getElementById('new-nombre').value.trim();
-  if (!nombre) { toast('Ingresá un nombre'); return; }
-  const id = Math.random().toString(36).substr(2, 8);
-  await setDoc(doc(db, 'bitacoras', id), {
-    nombre,
-    creadoEn: new Date().toISOString(),
-    estado: 'activa',
-    fichaCompletada: false,
-    diasRegistrados: 0,
-    ultimoRegistro: null,
-    dosis: {}
-  });
-  const link = `${location.origin}${location.pathname}?b=${id}`;
-  document.getElementById('link-texto').textContent = link;
-  document.getElementById('link-result').style.display = 'block';
-}
-
-// ─── NAVEGACIÓN ───────────────────────────────────────────────────────────────
-window.showScreen = function(s) {
-  document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-  document.getElementById('screen-' + s).classList.add('active');
-}
-
-window.panelTab = function(t, el) {
-  document.querySelectorAll('#screen-panel .tab').forEach(e => e.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('ptab-personas').style.display = t === 'personas' ? 'block' : 'none';
-  document.getElementById('ptab-resumen').style.display  = t === 'resumen'   ? 'block' : 'none';
-  if (t === 'resumen') buildDimBars();
-}
-
-window.usuarioTab = function(t, el) {
-  document.querySelectorAll('#usuario-tabs .tab').forEach(e => e.classList.remove('active'));
-  if (el) el.classList.add('active');
-  ['ficha','hoy','calendario','estados'].forEach(tab => {
-    document.getElementById('utab-' + tab).style.display = tab === t ? 'block' : 'none';
-  });
-  if (t === 'calendario') buildCal();
-  if (t === 'estados')    buildScales();
-}
-
-// ─── FICHA ────────────────────────────────────────────────────────────────────
-window.confirmarFicha = async function() {
-  if (!BID) return;
-  const antData = {};
-  document.querySelectorAll('#anamnesis-card .toggle').forEach((tog, i) => {
-    antData[ANT[i]] = tog.classList.contains('on');
-  });
-  const sustData = {};
-  document.querySelectorAll('#sustancias-card .toggle').forEach((tog, i) => {
-    sustData[SUST[i]] = tog.classList.contains('on');
-  });
-  try {
-    await updateDoc(doc(db, 'bitacoras', BID), {
-      fichaCompletada: true,
-      fechaCalibracion: document.getElementById('fecha-calibracion').value,
-      peso: document.getElementById('ficha-peso').value,
-      altura: document.getElementById('ficha-altura').value,
-      fnac: document.getElementById('ficha-fnac').value,
-      intencion: document.getElementById('ficha-intencion').value,
-      beneficios: document.getElementById('ficha-beneficios').value,
-      desafios: document.getElementById('ficha-desafios').value,
-      medicamentos: document.getElementById('ficha-medicamentos').value,
-      antecedentes: antData,
-      sustancias: sustData,
-    });
-    BDATA = { ...BDATA, fichaCompletada: true, intencion: document.getElementById('ficha-intencion').value };
-    document.getElementById('ficha-form').style.display = 'none';
-    document.getElementById('ficha-ok').style.display = 'block';
-    toast('Ficha guardada ✓');
-  } catch(e) { toast('Error: ' + e.message); }
-}
-
-function buildAnamnesis() {
-  const c = document.getElementById('anamnesis-card');
-  if (c.children.length) return;
-  c.innerHTML = ANT.map(a => `
-    <div class="toggle-row">
-      <span class="toggle-label">${a}</span>
-      <div class="toggle" onclick="this.classList.toggle('on')"></div>
-    </div>`).join('');
-}
-
-function buildSustancias() {
-  const c = document.getElementById('sustancias-card');
-  if (c.children.length) return;
-  c.innerHTML = SUST.map(s => `
-    <div class="toggle-row">
-      <span class="toggle-label">${s}</span>
-      <div class="toggle" onclick="this.classList.toggle('on')"></div>
-    </div>`).join('');
-}
-
-// ─── HOY ──────────────────────────────────────────────────────────────────────
-function buildHoy() {
-  const now = new Date();
-  document.getElementById('hoy-fecha-label').textContent =
-    now.toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
-  const dias = (BDATA?.diasRegistrados || 0) + 1;
-  document.getElementById('hoy-dia-num').textContent = 'Día ' + dias;
-  const tipo = getTipoDia(dias - 1);
-  const chip = document.getElementById('hoy-chip');
-  if (tipo === 'cal-toma')  { chip.textContent = 'Toma · Calibración'; chip.className = 'chip chip-toma-cal'; }
-  else if (tipo === 'fad-toma') { chip.textContent = 'Toma · Fadiman'; chip.className = 'chip chip-toma-fad'; }
-  else { chip.textContent = 'Descanso'; chip.className = 'chip chip-descanso'; }
-  const intEl = document.getElementById('hoy-intencion');
-  if (BDATA?.intencion) { intEl.textContent = '"' + BDATA.intencion + '"'; intEl.style.display = 'block'; }
-}
-
-// FIX 4: guardar registro del día en Firestore
-window.guardarHoy = async function() {
-  if (!BID) { toast('Sin conexión a bitácora'); return; }
-  const dia = (BDATA?.diasRegistrados || 0) + 1;
-  const registro = {
-    fecha: new Date().toISOString(),
-    sentiste:     document.getElementById('hoy-sentiste').value,
-    distinto:     document.getElementById('hoy-distinto').value,
-    alimentacion: document.getElementById('hoy-alimentacion').value,
-    suenos:       document.getElementById('hoy-suenos').value,
-    medicacion:   document.getElementById('hoy-medicacion').value,
-    sexualidad:   document.getElementById('hoy-sexualidad').value,
-    dosisNota:    document.getElementById('hoy-dosis-nota').value,
-  };
-  try {
-    await updateDoc(doc(db, 'bitacoras', BID), {
-      diasRegistrados: dia,
-      ultimoRegistro: new Date().toISOString(),
-      [`registros.dia${dia}`]: registro
-    });
-    BDATA.diasRegistrados = dia;
-    // Limpiar campos
-    ['hoy-sentiste','hoy-distinto','hoy-alimentacion','hoy-suenos','hoy-medicacion','hoy-sexualidad','hoy-dosis-nota']
-      .forEach(id => { document.getElementById(id).value = ''; });
-    buildHoy();
-    toast('Registro del día guardado ✓');
-  } catch(e) { toast('Error al guardar: ' + e.message); }
-}
-
-// ─── CALENDARIO ───────────────────────────────────────────────────────────────
-function getTipoDia(idx) {
-  if (idx < 7) return idx % 2 === 0 ? 'cal-toma' : 'cal-descanso';
-  return (idx - 7) % 3 === 0 ? 'fad-toma' : 'fad-descanso';
-}
-
-function buildCal() {
-  const c = document.getElementById('cal-container');
-  c.innerHTML = '';
-  const hoy = BDATA?.diasRegistrados || 0;
-  let html = '';
-  for (let w = 0; w < 6; w++) {
-    const lbl = w === 0 ? 'Semana 1 · Calibración' : `Semana ${w+1} · Fadiman`;
-    html += `<div class="week-block"><div class="week-label">${lbl}</div>`;
-    html += '<div class="day-names-row">' + DAY_NAMES.map(d => `<div class="day-name-h">${d}</div>`).join('') + '</div>';
-    html += '<div class="week-grid">';
-    for (let d = 0; d < 7; d++) {
-      const idx  = w * 7 + d;
-      const tipo = getTipoDia(idx);
-      const esToma = tipo.includes('toma');
-      const cached = dosisMap[idx];
-      const badge  = cached ? `<div class="dosis-badge">${cached.valor}${cached.unidad}</div>` : '';
-      const cls = [tipo, idx === hoy ? 'today' : '', idx < hoy ? 'done' : '', esToma ? 'clickable' : ''].filter(Boolean).join(' ');
-      // FIX 2: solo días de toma abren modal
-      const click = esToma ? `onclick="abrirModal(${idx},'${tipo}')"` : '';
-      html += `<div class="day-cell ${cls}" ${click}><span>${idx+1}</span>${badge}</div>`;
-    }
-    html += '</div></div>';
-  }
-  c.innerHTML = html;
-}
-
-// FIX 2: modal dosis
-window.abrirModal = function(idx, tipo) {
-  modalDayIdx = idx;
-  document.getElementById('modal-titulo').textContent = 'Día ' + (idx + 1);
-  document.getElementById('modal-tipo').textContent = tipo === 'cal-toma' ? 'Toma · Calibración' : 'Toma · Fadiman';
-  const c = dosisMap[idx] || {};
-  document.getElementById('modal-dosis-val').value = c.valor || '';
-  document.getElementById('modal-nota').value = c.nota || '';
-  setUnit(c.unidad || 'mg');
-  document.getElementById('dosis-modal').classList.add('open');
-}
-
-window.cerrarModal = function() {
-  document.getElementById('dosis-modal').classList.remove('open');
-  modalDayIdx = null;
-}
-
-window.setUnit = function(u) {
-  modalUnit = u;
-  document.getElementById('unit-mg').classList.toggle('active', u === 'mg');
-  document.getElementById('unit-ml').classList.toggle('active', u === 'ml');
-}
-
-window.guardarDosis = async function() {
-  if (modalDayIdx === null) return;
-  const val  = document.getElementById('modal-dosis-val').value;
-  const nota = document.getElementById('modal-nota').value;
-  dosisMap[modalDayIdx] = { valor: val, unidad: modalUnit, nota };
-  cerrarModal();
-  buildCal();
-  if (BID) {
+    // Inicialización híbrida Firestore / Offline Fallback
     try {
-      await updateDoc(doc(db, 'bitacoras', BID), {
-        [`dosis.${modalDayIdx}`]: { valor: val, unidad: modalUnit, nota }
+      const app = initializeApp(firebaseConfig);
+      db = getFirestore(app);
+      console.log("Firebase inicializado correctamente en proyecto: bitacora-microdosis-50db0");
+    } catch (e) {
+      console.warn("No se pudo conectar a Firebase Firestore. Activando Modo Simulación Offline para pruebas de UX.", e);
+      offlineMode = true;
+    }
+
+    // Almacenamiento local offline en caso de que no haya conexión a Firestore
+    const localDb = {
+      get: (id) => JSON.parse(localStorage.getItem(`bitacora_${id}`)),
+      set: (id, data) => localStorage.setItem(`bitacora_${id}`, JSON.stringify(data)),
+      list: () => {
+        const list = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key.startsWith("bitacora_")) {
+            list.push(JSON.parse(localStorage.getItem(key)));
+          }
+        }
+        // Si la lista está vacía en simulación, crear algunos dummies para que el Admin no vea el panel vacío
+        if (list.length === 0) {
+          const dummyId = "sav12345";
+          const dummy = {
+            id: dummyId,
+            nombre: "Sofía Rodríguez (Demo Offline)",
+            creadoEn: new Date().toISOString(),
+            estado: "activa",
+            fichaCompletada: true,
+            diasRegistrados: 3,
+            ultimoRegistro: new Date().toISOString(),
+            fechaCalibracion: "2026-05-20",
+            semanasTotales: 6,
+            peso: "62",
+            altura: "165",
+            fnac: "1994-08-12",
+            intencion: "Poder conectar mejor con el aquí y ahora, y disminuir la ansiedad cognitiva cotidiana.",
+            beneficios: "Estar más enfocada en mi trabajo, sentir paz interior.",
+            desafios: "No abrumarme los días que me toque rendir en el trabajo.",
+            medicamentos: "Ninguno",
+            antecedentes: { "Ansiedad": true, "Estrés": true },
+            sustancias: { "Alcohol": true },
+            estadosLineaBase: { "Foco": 2, "Tranquilidad": 2, "Calidad de Sueño": 3, "Ánimo": 3, "Energía": 3 },
+            estadosCierre: {},
+            registros: {
+              "dia0": {
+                comoSintio: "Me sentí un poco ansiosa en la mañana pero luego fluyó el día con buena energía y ganas.",
+                algoDistinto: "Ninguno",
+                alimentacion: "Almorcé liviano.",
+                suenos: "Soñé con un bosque húmedo.",
+                medicacion: "Ninguna",
+                sexualidad: "Todo bien",
+                notaDosis: "Inicio mi calibración"
+              },
+              "dia1": {
+                comoSintio: "Día de descanso de calibración. Trabajé tranquila y a tiempo.",
+                algoDistinto: "Mucho foco",
+                alimentacion: "Normal",
+                suenos: "Sin recuerdos",
+                medicacion: "",
+                sexualidad: ""
+              }
+            },
+            estados: {
+              "dia0": { "Foco": 3, "Tranquilidad": 2, "Calidad de Sueño": 3, "Ánimo": 3, "Energía": 4 },
+              "dia1": { "Foco": 4, "Tranquilidad": 3, "Calidad de Sueño": 3, "Ánimo": 4, "Energía": 3 }
+            },
+            dosis: {
+              "0": { valor: "10", unidad: "mg", nota: "Toma inicial de calibración" }
+            },
+            ruedaVida: {
+              inicio: { "Salud y consumo": 6, "Relaciones personales": 7, "Desarrollo Personal / Espiritual": 8, "Trabajo / Estudios": 5, "Pareja / Amor": 7, "Economía": 6, "Entorno físico": 7, "Ocio y diversión": 5 }
+            },
+            notasAdmin: {},
+            informeCierre: {}
+          };
+          localStorage.setItem(`bitacora_${dummyId}`, JSON.stringify(dummy));
+          list.push(dummy);
+        }
+        return list;
+      },
+      delete: (id) => localStorage.removeItem(`bitacora_${id}`)
+    };
+
+    // ==========================================================================
+    // 5.2 DEFINICIÓN DE DIMENSIONES & ÁREAS (SECCIONES 10 Y 14 DEL PRD)
+    // ==========================================================================
+    const DIMENSIONES = [
+      { id: "Calidad de Sueño", pregunta: "Me despierto despejado o tengo problemas para dormir?" },
+      { id: "Energía", pregunta: "Me siento activo y con vigor o fatigado?" },
+      { id: "Ánimo", pregunta: "Me siento animado y de buen humor o con dificultades emocionales?" },
+      { id: "Autoeficacia", pregunta: "Confío en mi capacidad para hacer frente a las cosas?" },
+      { id: "Tranquilidad", pregunta: "Me siento en calma y relajado?" },
+      { id: "Amabilidad", pregunta: "Trato a los demás con consideración?" },
+      { id: "Foco", pregunta: "Dirijo mi atención completamente a lo que realizo?" },
+      { id: "Creatividad", pregunta: "Afronto situaciones de forma ingeniosa?" },
+      { id: "Capacidad cognitiva", pregunta: "Comprendo y razono con claridad?" },
+      { id: "Autoconocimiento", pregunta: "Me conozco y acepto?" },
+      { id: "Contemplación", pregunta: "Me detengo a apreciar más las cosas?" },
+      { id: "Conexión", pregunta: "Tengo sensación de estar conectado con todo?" },
+      { id: "Espiritualidad", pregunta: "Siento cercanía con lo sagrado?" }
+    ];
+
+    const AREAS_RUEDA = [
+      "Salud y consumo",
+      "Relaciones personales",
+      "Desarrollo Personal / Espiritual",
+      "Trabajo / Estudios",
+      "Pareja / Amor",
+      "Economía",
+      "Entorno físico",
+      "Ocio y diversión"
+    ];
+
+    // ==========================================================================
+    // 5.3 ESTADO REACTIVO GLOBAL
+    // ==========================================================================
+    const state = {
+      role: "participant", // admin | participant
+      participantId: null, // Si tiene ?b=ID es el ID del participante activo
+      participantData: null, // Objeto de la bitácora activa
+      participantsList: [], // Todos los participantes (sólo admin)
+      activeTab: "ficha", // Subtab activa: ficha | registros | estados | dosis
+      darkMode: false,
+      selectedDayIdx: 0, // Día seleccionado para registro/notas admin
+      chartDimension: "Foco", // Dimensión seleccionada en gráfico de evolución
+      chartSuperimpose: false // Superposición de todas las dimensiones
+    };
+
+    // ==========================================================================
+    // 5.4 CONTROLADOR DE VISTAS (SPA ROUTER)
+    // ==========================================================================
+    function checkRouter() {
+      const params = new URLSearchParams(window.location.search);
+      const b = params.get("b");
+      const adminView = params.get("admin_view");
+      
+      if (b) {
+        state.role = "participant";
+        state.participantId = b;
+        document.documentElement.setAttribute("data-role", "participant");
+      } else {
+        state.role = "admin";
+        state.participantId = adminView || null;
+        document.documentElement.setAttribute("data-role", "admin");
+      }
+      
+      const roleBadge = document.getElementById("role-badge");
+      if (roleBadge) {
+        roleBadge.innerText = state.role === "admin" ? "Acompañante" : "Participante";
+        roleBadge.style.backgroundColor = state.role === "admin" ? "var(--purple-light)" : "var(--border-mid)";
+        roleBadge.style.color = state.role === "admin" ? "var(--purple-text)" : "var(--text-primary)";
+      }
+
+      loadData();
+    }
+
+    // ==========================================================================
+    // 5.5 LOGICA DE BASE DE DATOS E INICIALIZACIÓN
+    // ==========================================================================
+    async function loadData() {
+      if (state.role === "participant") {
+        await loadParticipantData(state.participantId);
+      } else {
+        await loadAdminDashboard();
+        if (state.participantId) {
+          state.participantData = state.participantsList.find(x => x.id === state.participantId);
+          if (state.participantData) {
+            renderAdminParticipantDetailView();
+          } else {
+            state.participantId = null;
+            renderAdminApp();
+          }
+        } else {
+          renderAdminApp();
+        }
+      }
+    }
+
+    async function loadParticipantData(id) {
+      showLoading();
+      try {
+        let data = null;
+        if (!offlineMode) {
+          const docRef = doc(db, "bitacoras", id);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            data = docSnap.data();
+            data.id = id;
+          }
+        } else {
+          data = localDb.get(id);
+        }
+
+        if (data) {
+          state.participantData = data;
+          renderParticipantApp();
+        } else {
+          renderError("El enlace de bitácora solicitado es inválido o fue dado de baja por el acompañante.");
+        }
+      } catch (e) {
+        console.error("Error cargando participante:", e);
+        // Si falla Firestore en vivo, intentar local offline
+        const data = localDb.get(id);
+        if (data) {
+          state.participantData = data;
+          renderParticipantApp();
+          showToast("Error de conexión. Cargados datos locales offline.");
+        } else {
+          renderError("Error al conectar con Firestore. Verifique la conexión.");
+        }
+      }
+    }
+
+    async function loadAdminDashboard() {
+      showLoading();
+      try {
+        let list = [];
+        if (!offlineMode) {
+          const colRef = collection(db, "bitacoras");
+          const querySnap = await getDocs(colRef);
+          querySnap.forEach((doc) => {
+            const item = doc.data();
+            item.id = doc.id;
+            list.push(item);
+          });
+        } else {
+          list = localDb.list();
+        }
+        
+        state.participantsList = list;
+        renderAdminApp();
+      } catch (e) {
+        console.error("Error cargando dashboard de acompañante:", e);
+        // Fallback local
+        state.participantsList = localDb.list();
+        renderAdminApp();
+        showToast("Error de conexión. Mostrando panel offline.");
+      }
+    }
+
+    // Guardado general del participante en Firestore
+    async function saveActiveParticipant(customMessage = "Progreso guardado") {
+      if (!state.participantData || !state.participantId) return;
+      try {
+        if (!offlineMode) {
+          const docRef = doc(db, "bitacoras", state.participantId);
+          await setDoc(docRef, state.participantData, { merge: true });
+        } else {
+          localDb.set(state.participantId, state.participantData);
+        }
+        showToast(customMessage);
+      } catch (e) {
+        console.error("Error guardando progreso:", e);
+        // Guardar localmente
+        localDb.set(state.participantId, state.participantData);
+        showToast("Progreso guardado de manera local (offline)");
+      }
+    }
+
+    // ==========================================================================
+    // 5.6 CONFIGURACIÓN DE PROTOCOLOS DE DOSIFICACIÓN (SECCIÓN 5)
+    // ==========================================================================
+    function getTipoDia(idx) {
+      if (idx <= 6) return idx % 2 === 0 ? 'cal-toma' : 'cal-descanso';
+      if (idx === 7 || idx === 8) return 'transicion-descanso';
+      return (idx - 9) % 3 === 0 ? 'fad-toma' : 'fad-descanso';
+    }
+
+    function getTipoDiaText(tipo) {
+      switch (tipo) {
+        case 'cal-toma': return 'Toma de Calibración';
+        case 'cal-descanso': return 'Calibración (Descanso)';
+        case 'transicion-descanso': return 'Transición (Obligatorio)';
+        case 'fad-toma': return 'Fadiman (Toma)';
+        case 'fad-descanso': return 'Fadiman (Descanso)';
+        default: return 'Descanso';
+      }
+    }
+
+    // Retorna todos los días del proceso calculados en base a las semanas totales
+    function getProcessDays() {
+      const totalSemanas = state.participantData.semanasTotales || 6;
+      const totalDias = totalSemanas * 7;
+      const days = [];
+      for (let i = 0; i < totalDias; i++) {
+        days.push({
+          idx: i,
+          tipo: getTipoDia(i)
+        });
+      }
+      return days;
+    }
+
+    // Retorna la fecha exacta correspondiente al día de índice i
+    function getDayDate(startDateStr, i) {
+      if (!startDateStr) return null;
+      const date = new Date(startDateStr + "T12:00:00");
+      date.setDate(date.getDate() + i);
+      return date;
+    }
+
+    function formatShortDate(dateObj) {
+      if (!dateObj) return "";
+      const d = dateObj.getDate();
+      const m = dateObj.getMonth() + 1;
+      return `${d < 10 ? '0'+d : d}/${m < 10 ? '0'+m : m}`;
+    }
+
+    function formatFullDateString(dateObj) {
+      if (!dateObj) return "";
+      return dateObj.toLocaleDateString("es-AR", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    }
+
+    function getDiferenciaDias(fechaRefISO) {
+      if (!fechaRefISO) return null;
+      const inicio = new Date(state.participantData.fechaCalibracion + "T00:00:00");
+      const actual = new Date(fechaRefISO + "T00:00:00");
+      const diffTime = actual - inicio;
+      if (diffTime < 0) return 0;
+      return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    }
+
+    // ==========================================================================
+    // 5.7 DEBOUNCED AUTOSAVE PARA DOSIS (SECCIÓN 4)
+    // ==========================================================================
+    let autosaveTimer = null;
+    function triggerAutosaveDose(dayIdx, valor, unidad, nota) {
+      const saveDot = document.getElementById("dose-save-dot");
+      const saveText = document.getElementById("dose-save-text");
+      
+      if (saveDot && saveText) {
+        saveDot.className = "save-dot syncing";
+        saveText.innerText = "Guardando...";
+      }
+
+      clearTimeout(autosaveTimer);
+      autosaveTimer = setTimeout(async () => {
+        if (!state.participantData.dosis) state.participantData.dosis = {};
+        state.participantData.dosis[dayIdx] = { valor, unidad, nota };
+
+        try {
+          if (!offlineMode) {
+            const docRef = doc(db, "bitacoras", state.participantId);
+            await updateDoc(docRef, {
+              [`dosis.${dayIdx}`]: { valor, unidad, nota }
+            });
+          } else {
+            localDb.set(state.participantId, state.participantData);
+          }
+          
+          if (saveDot && saveText) {
+            saveDot.className = "save-dot success";
+            saveText.innerText = "Guardado automáticamente";
+          }
+          
+          // Actualizar vista del calendario por debajo
+          const activeCellBadge = document.querySelector(`.calendar-cell[data-day-idx="${dayIdx}"] .cell-badge-dose`);
+          if (activeCellBadge) {
+            activeCellBadge.innerText = valor ? `${valor} ${unidad}` : "";
+          }
+        } catch (e) {
+          console.error("Error autosaving dose:", e);
+          if (saveText) saveText.innerText = "Fallo al guardar offline";
+        }
+      }, 800);
+    }
+
+    // ==========================================================================
+    // 5.8 ELEMENTOS VIRTUALES Y RENDERING DE PARTICIPANTE
+    // ==========================================================================
+    function renderParticipantApp() {
+      const root = document.getElementById("app-root");
+      const p = state.participantData;
+
+      // Si no completó la ficha inicial
+      if (!p.fichaCompletada) {
+        root.innerHTML = getFichaOnboardingHTML();
+        setupFichaListeners();
+        return;
+      }
+
+      // Estructura de participante con barra superior interna de navegación
+      root.innerHTML = `
+        <div class="card" style="padding: 1rem; border-color: var(--purple); background-color: var(--purple-light); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.8rem;">
+          <div>
+            <h3 style="font-family: var(--font-sans); font-weight: 500; font-size: 1.1rem; color: var(--purple-text);">Bitácora de ${p.nombre}</h3>
+            <p style="font-size: 0.8rem; color: var(--text-secondary);">Inicio: ${p.fechaCalibracion} • Duración: ${p.semanasTotales} semanas</p>
+          </div>
+          ${p.estado === 'completada' ? `<span class="badge-estado completada">Proceso Completado (Sólo Lectura)</span>` : `<span class="badge-estado activa">Proceso Activo</span>`}
+        </div>
+
+        <nav class="tabs-pills">
+          <button class="tab-pill ${state.activeTab === 'hoy' ? 'active' : ''}" data-tab="hoy">Hoy</button>
+          <button class="tab-pill ${state.activeTab === 'calendario' ? 'active' : ''}" data-tab="calendario">Calendario</button>
+          <button class="tab-pill ${state.activeTab === 'estados' ? 'active' : ''}" data-tab="estados">Dimensiones</button>
+          <button class="tab-pill ${state.activeTab === 'ficha' ? 'active' : ''}" data-tab="ficha">Mi Ficha</button>
+        </nav>
+
+        <div id="tab-content-container">
+          <!-- Renderizado dinámico de tab -->
+        </div>
+      `;
+
+      // Registrar botones de navegación
+      document.querySelectorAll(".tab-pill").forEach(tabBtn => {
+        tabBtn.addEventListener("click", () => {
+          state.activeTab = tabBtn.getAttribute("data-tab");
+          renderParticipantApp();
+        });
       });
-      toast('Dosis guardada ✓');
-    } catch(e) { toast('Error: ' + e.message); }
-  }
-}
 
-// ─── ESTADOS ──────────────────────────────────────────────────────────────────
-function buildScales() {
-  const c = document.getElementById('scale-container');
-  if (c.children.length) return;
-  c.innerHTML = DIMS.map((d, di) => `
-    <div class="scale-row">
-      <span class="scale-name">${d}</span>
-      <div class="dots">
-        ${[1,2,3,4,5].map(n => `<div class="dot" id="sc${di}_${n}" onclick="selDot(${di},${n})">${n}</div>`).join('')}
-      </div>
-    </div>`).join('');
-}
-
-window.selDot = function(dim, val) {
-  for (let n = 1; n <= 5; n++)
-    document.getElementById(`sc${dim}_${n}`)?.classList.toggle('sel', n === val);
-}
-
-// FIX 5: guardar estados en Firestore
-window.guardarEstados = async function() {
-  if (!BID) { toast('Sin conexión a bitácora'); return; }
-  const estados = {};
-  DIMS.forEach((d, di) => {
-    for (let n = 1; n <= 5; n++) {
-      if (document.getElementById(`sc${di}_${n}`)?.classList.contains('sel'))
-        estados[d] = n;
+      renderActiveTabContent();
     }
-  });
-  const dia = BDATA?.diasRegistrados || 1;
-  try {
-    await updateDoc(doc(db, 'bitacoras', BID), {
-      [`estados.dia${dia}`]: estados
+
+    function renderActiveTabContent() {
+      const container = document.getElementById("tab-content-container");
+      if (!container) return;
+
+      const p = state.participantData;
+
+      switch (state.activeTab) {
+        case 'hoy':
+          container.innerHTML = getHoyTabHTML();
+          setupHoyListeners();
+          break;
+        case 'calendario':
+          container.innerHTML = getCalendarioTabHTML();
+          setupCalendarioListeners();
+          break;
+        case 'estados':
+          container.innerHTML = getEstadosTabHTML();
+          setupEstadosListeners();
+          break;
+        case 'ficha':
+          container.innerHTML = getFichaVerHTML();
+          break;
+      }
+    }
+
+    // --- ONBOARDING FICHA INICIAL (SECCIÓN 8) ---
+    function getFichaOnboardingHTML() {
+      return `
+        <div class="card" style="max-width: 760px; margin: 2rem auto;">
+          <h1 class="font-display" style="font-size: 2.2rem; text-align: center; margin-bottom: 0.5rem; color: var(--purple);">Comencemos tu Proceso</h1>
+          <p style="text-align: center; color: var(--text-secondary); margin-bottom: 2rem;">Ficha inicial del participante y medición de estados base</p>
+          
+          <form id="onboarding-form">
+            <!-- 1. Cuándo empiezan -->
+            <div class="form-group">
+              <label class="form-label" for="onb-fecha">¿Cuándo inicia tu calibración? <span class="help-tooltip-trigger" data-tooltip="Fecha en la que tomarás tu primera dosis de calibración">?</span></label>
+              <input type="date" id="onb-fecha" class="form-control" required value="${new Date().toISOString().split('T')[0]}">
+            </div>
+
+            <!-- Datos Generales -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+              <div class="form-group">
+                <label class="form-label" for="onb-fnac">Nacimiento</label>
+                <input type="date" id="onb-fnac" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="onb-peso">Peso (kg)</label>
+                <input type="number" id="onb-peso" class="form-control" placeholder="Ej: 70" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="onb-altura">Altura (cm)</label>
+                <input type="number" id="onb-altura" class="form-control" placeholder="Ej: 172" required>
+              </div>
+            </div>
+
+            <!-- Intención -->
+            <div class="form-group">
+              <label class="form-label" for="onb-intencion">¿Qué querés trabajar en este proceso? (Intención) <span class="help-tooltip-trigger" data-tooltip="Definir la intención principal. No se podrá cambiar durante el proceso">?</span></label>
+              <textarea id="onb-intencion" class="form-control" placeholder="Describí con tus palabras tu propósito principal..." required></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="onb-beneficios">Beneficios esperados</label>
+              <textarea id="onb-beneficios" class="form-control" placeholder="¿Qué cambios positivos esperás percibir?" required></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="onb-desafios">Desafíos anticipados</label>
+              <textarea id="onb-desafios" class="form-control" placeholder="¿Qué obstáculos pensás que podrían presentarse?" required></textarea>
+            </div>
+
+            <!-- Antecedentes de Salud -->
+            <h3 class="font-display" style="font-size: 1.3rem; margin-top: 2rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-soft); padding-bottom: 0.5rem;">Antecedentes de Salud</h3>
+            <div class="grid-2col">
+              ${["Fobias", "Insomnio", "TOC", "Tratamiento por depresión", "Intento de suicidio", "Trastornos alimenticios", "Esquizofrenia", "Abuso sexual", "Cardiopatías", "Diabetes", "Colesterol elevado", "Depresión", "Ansiedad", "Estrés", "Asma", "Adicciones"].map(ant => `
+                <div class="toggle-wrapper">
+                  <span class="toggle-label-desc">${ant}</span>
+                  <label class="switch">
+                    <input type="checkbox" class="onb-antecedente" data-name="${ant}">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              `).join('')}
+            </div>
+
+            <!-- Consumo de sustancias -->
+            <h3 class="font-display" style="font-size: 1.3rem; margin-top: 2rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-soft); padding-bottom: 0.5rem;">Consumo de sustancias (últimos 3 meses)</h3>
+            <div class="grid-2col">
+              ${["Cocaína", "Marihuana", "Anfetaminas", "Opiáceos", "Mescalina", "Psilocibina", "Alcohol"].map(sust => `
+                <div class="toggle-wrapper">
+                  <span class="toggle-label-desc">${sust}</span>
+                  <label class="switch">
+                    <input type="checkbox" class="onb-sustancia" data-name="${sust}">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="form-group" style="margin-top: 1.5rem;">
+              <label class="form-label" for="onb-medicamentos">Medicamentos y suplementos actuales</label>
+              <textarea id="onb-medicamentos" class="form-control" placeholder="Mencioná medicamentos o suplementos que tomes regularmente..."></textarea>
+            </div>
+
+            <!-- LÍNEA BASE DIMENSIONES -->
+            <h3 class="font-display" style="font-size: 1.3rem; margin-top: 2rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-soft); padding-bottom: 0.5rem;">Línea Base: Medición de Bienestar</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;">Calificá tu estado actual para cada dimensión del 1 al 5 antes de iniciar:</p>
+            
+            ${DIMENSIONES.map((d, index) => `
+              <div class="form-group" style="border-bottom: 1px solid var(--border-soft); padding-bottom: 1rem; margin-bottom: 1rem;">
+                <label class="form-label" style="font-size: 0.95rem; color: var(--text-primary); font-weight: 500;">
+                  ${index + 1}. ${d.id}
+                  <span style="display: block; font-weight: normal; font-size: 0.8rem; color: var(--text-secondary);">${d.pregunta}</span>
+                </label>
+                <div class="dots-scale" data-dimension="${d.id}">
+                  ${[1, 2, 3, 4, 5].map(val => `
+                    <button type="button" class="dot-btn onb-dot" data-value="${val}">${val}</button>
+                  `).join('')}
+                </div>
+              </div>
+            `).join('')}
+
+            <div style="margin-top: 2rem; display: flex; justify-content: flex-end;">
+              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem;">Guardar y Generar Calendario</button>
+            </div>
+          </form>
+        </div>
+      `;
+    }
+
+    function setupFichaListeners() {
+      const form = document.getElementById("onboarding-form");
+      
+      // Controlar clics en dots
+      document.querySelectorAll(".onb-dot").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const parent = btn.parentElement;
+          parent.querySelectorAll(".onb-dot").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+        });
+      });
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        
+        // Reunir antecedentes
+        const antecedentes = {};
+        document.querySelectorAll(".onb-antecedente").forEach(chk => {
+          if (chk.checked) antecedentes[chk.getAttribute("data-name")] = true;
+        });
+
+        // Reunir sustancias
+        const sustancias = {};
+        document.querySelectorAll(".onb-sustancia").forEach(chk => {
+          if (chk.checked) sustancias[chk.getAttribute("data-name")] = true;
+        });
+
+        // Reunir línea base de dimensiones
+        const estadosLineaBase = {};
+        let missingDimension = false;
+        
+        DIMENSIONES.forEach(d => {
+          const activeDot = document.querySelector(`.dots-scale[data-dimension="${d.id}"] .onb-dot.active`);
+          if (activeDot) {
+            estadosLineaBase[d.id] = parseInt(activeDot.getAttribute("data-value"));
+          } else {
+            missingDimension = true;
+          }
+        });
+
+        if (missingDimension) {
+          alert("Por favor califica todas las 13 dimensiones de bienestar para establecer tu línea base.");
+          return;
+        }
+
+        // Actualizar datos del participante
+        state.participantData.fechaCalibracion = document.getElementById("onb-fecha").value;
+        state.participantData.fnac = document.getElementById("onb-fnac").value;
+        state.participantData.peso = document.getElementById("onb-peso").value;
+        state.participantData.altura = document.getElementById("onb-altura").value;
+        state.participantData.intencion = document.getElementById("onb-intencion").value;
+        state.participantData.beneficios = document.getElementById("onb-beneficios").value;
+        state.participantData.desafios = document.getElementById("onb-desafios").value;
+        state.participantData.medicamentos = document.getElementById("onb-medicamentos").value;
+        state.participantData.antecedentes = antecedentes;
+        state.participantData.sustancias = sustancias;
+        state.participantData.estadosLineaBase = estadosLineaBase;
+        state.participantData.fichaCompletada = true;
+
+        await saveActiveParticipant("¡Ficha inicial guardada con éxito!");
+        renderParticipantApp();
+      });
+    }
+
+    // --- TAB HOY: REGISTRO DIARIO (SECCIÓN 9) ---
+    function getHoyTabHTML() {
+      const p = state.participantData;
+      // Calcular a qué día pertenece hoy
+      const actualDateStr = new Date().toISOString().split('T')[0];
+      const diaIdx = getDiferenciaDias(actualDateStr);
+
+      if (diaIdx < 0 || diaIdx >= (p.semanasTotales * 7)) {
+        return `
+          <div class="card" style="text-align: center; padding: 3rem 1.5rem;">
+            <h2 class="font-display" style="margin-bottom: 0.5rem;">Fuera de Rango de Calendario</h2>
+            <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto 1.5rem;">
+              Tu fecha de calibración está configurada para el <strong>${p.fechaCalibracion}</strong>. 
+              Por favor, consultá a tu acompañante o seleccioná el Calendario para visualizar los días del proceso.
+            </p>
+          </div>
+        `;
+      }
+
+      state.selectedDayIdx = diaIdx;
+      return getRegistroDiaFormHTML(diaIdx);
+    }
+
+    function getRegistroDiaFormHTML(diaIdx) {
+      const p = state.participantData;
+      const tipoDia = getTipoDia(diaIdx);
+      const isReadOnly = p.estado === 'completada';
+      
+      const registro = p.registros?.[`dia${diaIdx}`] || {};
+      const estadoDia = p.estados?.[`dia${diaIdx}`] || {};
+      const dosisDia = p.dosis?.[diaIdx] || null;
+
+      const dateObj = getDayDate(p.fechaCalibracion, diaIdx);
+
+      return `
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+              <h2 class="font-display" style="font-size: 1.8rem;">Día ${diaIdx} del Proceso</h2>
+              <p style="color: var(--text-secondary); text-transform: capitalize;">${formatFullDateString(dateObj)}</p>
+            </div>
+            <span class="cell-label" style="display: inline-block; width: auto; font-size: 0.75rem; padding: 0.3rem 0.8rem; border-radius: 20px; font-weight: bold;
+              ${tipoDia.includes('cal-toma') ? 'background-color: var(--red-light); color: var(--red);' : ''}
+              ${tipoDia.includes('fad-toma') ? 'background-color: var(--purple-light); color: var(--purple);' : ''}
+              ${tipoDia.includes('descanso') || tipoDia.includes('transicion') ? 'background-color: var(--border-soft); color: var(--text-secondary);' : ''}
+            ">
+              ${getTipoDiaText(tipoDia)}
+            </span>
+          </div>
+
+          <!-- Si es día de toma y no tiene cargada dosis, mostrar banner interactivo -->
+          ${(tipoDia === 'cal-toma' || tipoDia === 'fad-toma') ? `
+            <div class="card" style="background-color: var(--purple-light); border-color: var(--purple); display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.8rem;">
+              <div>
+                <h4 style="font-family: var(--font-sans); font-weight: 500; color: var(--purple-text);">Registro de Dosis diario</h4>
+                <p style="font-size: 0.8rem; color: var(--text-secondary);">
+                  ${dosisDia ? `Registrado: <strong>${dosisDia.valor} ${dosisDia.unidad}</strong> - ${dosisDia.nota || 'Sin notas'}` : 'Aún no cargaste los valores de tu microdosis de hoy.'}
+                </p>
+              </div>
+              <button class="btn btn-primary" id="btn-trigger-dose-modal" data-day="${diaIdx}">
+                ${dosisDia ? 'Editar Dosis' : 'Cargar Dosis'}
+              </button>
+            </div>
+          ` : ''}
+
+          <form id="registro-diario-form" ${isReadOnly ? 'disabled' : ''}>
+            <!-- Campos libres -->
+            <div class="form-group">
+              <label class="form-label" for="reg-comoSintio">¿Cómo te sentiste hoy? (Campo Principal) <span class="help-tooltip-trigger" data-tooltip="Describe tu estado de ánimo, sensaciones internas o nivel de bienestar general">?</span></label>
+              <textarea id="reg-comoSintio" class="form-control" required ${isReadOnly ? 'readonly' : ''}>${registro.comoSintio || ''}</textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="reg-algoDistinto">¿Algo distinto a lo habitual? <span class="help-tooltip-trigger" data-tooltip="Pensamientos recurrentes, percepciones incrementadas o sensaciones físicas sutiles">?</span></label>
+              <textarea id="reg-algoDistinto" class="form-control" ${isReadOnly ? 'readonly' : ''}>${registro.algoDistinto || ''}</textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="reg-alimentacion">Alimentación y energía <span class="help-tooltip-trigger" data-tooltip="Impacto en el proceso, digestión, ganas de actividad física">?</span></label>
+              <textarea id="reg-alimentacion" class="form-control" ${isReadOnly ? 'readonly' : ''}>${registro.alimentacion || ''}</textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="reg-suenos">Sueños o sincronicidades <span class="help-tooltip-trigger" data-tooltip="Cualquier sueño vivido, casualidades llamativas, etc.">?</span></label>
+              <textarea id="reg-suenos" class="form-control" placeholder="¿Les encontrás algún significado?" ${isReadOnly ? 'readonly' : ''}>${registro.suenos || ''}</textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="reg-medicacion">Cambios en medicación</label>
+              <textarea id="reg-medicacion" class="form-control" ${isReadOnly ? 'readonly' : ''}>${registro.medicacion || ''}</textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="reg-sexualidad">Sexualidad <span class="help-tooltip-trigger" data-tooltip="Cambios en valoración, libido, perspectiva, vitalidad">?</span></label>
+              <textarea id="reg-sexualidad" class="form-control" ${isReadOnly ? 'readonly' : ''}>${registro.sexualidad || ''}</textarea>
+            </div>
+
+            <!-- VALORACIÓN DE LAS 13 DIMENSIONES -->
+            <h3 class="font-display" style="font-size: 1.4rem; margin-top: 2rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-soft); padding-bottom: 0.5rem;">Medición de Bienestar de Hoy</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;">Calificá tu estado actual para cada dimensión del 1 al 5:</p>
+
+            ${DIMENSIONES.map((d, index) => {
+              const currentScore = estadoDia[d.id] || null;
+              return `
+                <div class="form-group" style="border-bottom: 1px solid var(--border-soft); padding-bottom: 1rem; margin-bottom: 1rem;">
+                  <label class="form-label" style="font-size: 0.95rem; color: var(--text-primary); font-weight: 500;">
+                    ${index + 1}. ${d.id}
+                    <span style="display: block; font-weight: normal; font-size: 0.8rem; color: var(--text-secondary);">${d.pregunta}</span>
+                  </label>
+                  <div class="dots-scale today-scale" data-dimension="${d.id}">
+                    ${[1, 2, 3, 4, 5].map(val => `
+                      <button type="button" class="dot-btn today-dot ${currentScore === val ? 'active' : ''} ${isReadOnly ? 'cell-disabled' : ''}" data-value="${val}" ${isReadOnly ? 'disabled' : ''}>${val}</button>
+                    `).join('')}
+                  </div>
+                </div>
+              `;
+            }).join('')}
+
+            ${isReadOnly ? '' : `
+              <div style="margin-top: 2rem; display: flex; justify-content: flex-end;">
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem;">Guardar Registro de Hoy</button>
+              </div>
+            `}
+          </form>
+        </div>
+      `;
+    }
+
+    function setupHoyListeners() {
+      // Listener botón Cargar/Editar Dosis
+      const btnDose = document.getElementById("btn-trigger-dose-modal");
+      if (btnDose) {
+        btnDose.addEventListener("click", () => {
+          const day = btnDose.getAttribute("data-day");
+          openDoseModal(parseInt(day));
+        });
+      }
+
+      // Controlador de selección de dots hoy
+      document.querySelectorAll(".today-dot").forEach(btn => {
+        btn.addEventListener("click", () => {
+          if (state.participantData.estado === 'completada') return;
+          const parent = btn.parentElement;
+          parent.querySelectorAll(".today-dot").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+        });
+      });
+
+      // Submit Form
+      const form = document.getElementById("registro-diario-form");
+      if (form) {
+        form.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          if (state.participantData.estado === 'completada') return;
+
+          const diaIdx = state.selectedDayIdx;
+
+          // Recoger campos libres
+          const registro = {
+            comoSintio: document.getElementById("reg-comoSintio").value,
+            algoDistinto: document.getElementById("reg-algoDistinto").value,
+            alimentacion: document.getElementById("reg-alimentacion").value,
+            suenos: document.getElementById("reg-suenos").value,
+            medicacion: document.getElementById("reg-medicacion").value,
+            sexualidad: document.getElementById("reg-sexualidad").value
+          };
+
+          // Recoger dimensiones
+          const estados = {};
+          let missing = false;
+          DIMENSIONES.forEach(d => {
+            const activeDot = document.querySelector(`.today-scale[data-dimension="${d.id}"] .today-dot.active`);
+            if (activeDot) {
+              estados[d.id] = parseInt(activeDot.getAttribute("data-value"));
+            } else {
+              missing = true;
+            }
+          });
+
+          if (missing) {
+            alert("Por favor califica las 13 dimensiones de bienestar para el día de hoy.");
+            return;
+          }
+
+          if (!state.participantData.registros) state.participantData.registros = {};
+          if (!state.participantData.estados) state.participantData.estados = {};
+
+          state.participantData.registros[`dia${diaIdx}`] = registro;
+          state.participantData.estados[`dia${diaIdx}`] = estados;
+          state.participantData.ultimoRegistro = new Date().toISOString();
+          state.participantData.diasRegistrados = Object.keys(state.participantData.registros).length;
+
+          await saveActiveParticipant(`Registro del Día ${diaIdx} guardado con éxito`);
+          renderParticipantApp();
+        });
+      }
+    }
+
+    // --- TAB CALENDARIO: TODAS LAS SEMANAS (SECCIÓN 5) ---
+    function getCalendarioTabHTML() {
+      const p = state.participantData;
+      const days = getProcessDays();
+      
+      // Organizar días en filas de semanas (7 días c/u)
+      const weeks = [];
+      for (let i = 0; i < days.length; i += 7) {
+        weeks.push(days.slice(i, i + 7));
+      }
+
+      return `
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+              <h2 class="font-display" style="font-size: 1.8rem;">Calendario del Proceso</h2>
+              <p style="color: var(--text-secondary);">Seleccioná los días de toma para registrar tus dosis o días pasados para editar tus registros.</p>
+            </div>
+            <div style="display: flex; gap: 0.6rem; font-size: 0.75rem; flex-wrap: wrap;">
+              <span style="display: flex; align-items: center; gap: 0.3rem;"><span style="width: 12px; height: 12px; border-radius: 3px; background-color: var(--red-light); border: 1px solid var(--red);"></span> Calibración</span>
+              <span style="display: flex; align-items: center; gap: 0.3rem;"><span style="width: 12px; height: 12px; border-radius: 3px; background-color: var(--purple-light); border: 1px solid var(--purple);"></span> Fadiman</span>
+              <span style="display: flex; align-items: center; gap: 0.3rem;"><span style="width: 12px; height: 12px; border-radius: 3px; background-color: var(--border-soft);"></span> Transición</span>
+            </div>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <div style="min-width: 600px;">
+              <div class="calendar-grid" style="grid-template-columns: repeat(7, 1fr); font-weight: bold;">
+                <div class="calendar-header-day">Lun</div>
+                <div class="calendar-header-day">Mar</div>
+                <div class="calendar-header-day">Mié</div>
+                <div class="calendar-header-day">Jue</div>
+                <div class="calendar-header-day">Vie</div>
+                <div class="calendar-header-day">Sáb</div>
+                <div class="calendar-header-day">Dom</div>
+              </div>
+              
+              ${weeks.map((week, wIdx) => `
+                <div style="margin-bottom: 0.8rem;">
+                  <h4 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-tertiary); margin-bottom: 0.3rem;">Semana ${wIdx + 1}</h4>
+                  <div class="calendar-grid">
+                    ${week.map(day => {
+                      const tipo = day.tipo;
+                      const dateObj = getDayDate(p.fechaCalibracion, day.idx);
+                      const isRegistered = p.registros?.[`dia${day.idx}`] ? true : false;
+                      const hasDose = p.dosis?.[day.idx] ? true : false;
+                      const doseVal = hasDose ? `${p.dosis[day.idx].valor} ${p.dosis[day.idx].unit || p.dosis[day.idx].unidad}` : "";
+                      const isClickable = tipo.includes('toma');
+                      
+                      return `
+                        <div class="calendar-cell cell-${tipo} ${isClickable ? '' : 'cell-disabled'}" 
+                             data-day-idx="${day.idx}" 
+                             data-tipo-dia="${tipo}">
+                          <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span class="cell-number">${day.idx}</span>
+                            <span class="cell-number" style="font-size: 0.65rem; color: var(--text-tertiary);">${formatShortDate(dateObj)}</span>
+                          </div>
+                          
+                          ${isRegistered ? `<span class="cell-badge-registered" title="Registro diario completo"></span>` : ''}
+                          ${hasDose ? `<span class="cell-badge-dose" title="Dosis registrada: ${doseVal}">${doseVal}</span>` : ''}
+                          
+                          <span class="cell-label">${tipo.includes('cal') ? 'Calib.' : (tipo.includes('transicion') ? 'Trans.' : 'Fadiman')}</span>
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div id="calendar-day-focus-container" style="margin-top: 2rem;">
+            <!-- Mostrar formulario de carga rápida de día al hacer clic en el calendario -->
+          </div>
+        </div>
+      `;
+    }
+
+    function setupCalendarioListeners() {
+      const cells = document.querySelectorAll(".calendar-cell");
+      cells.forEach(cell => {
+        cell.addEventListener("click", () => {
+          const dayIdx = parseInt(cell.getAttribute("data-day-idx"));
+          const tipo = cell.getAttribute("data-tipo-dia");
+
+          // Si es día de toma, abre modal de dosis
+          if (tipo.includes("toma")) {
+            openDoseModal(dayIdx);
+          } else {
+            // Cargar panel inferior para rellenar registro diario
+            const focusContainer = document.getElementById("calendar-day-focus-container");
+            if (focusContainer) {
+              state.selectedDayIdx = dayIdx;
+              focusContainer.innerHTML = `
+                <div style="border-top: 1px solid var(--border-soft); padding-top: 1.5rem;">
+                  <h3 class="font-display" style="margin-bottom: 1rem;">Editar registro pasado: Día ${dayIdx}</h3>
+                  ${getRegistroDiaFormHTML(dayIdx)}
+                </div>
+              `;
+              setupHoyListeners();
+              focusContainer.scrollIntoView({ behavior: 'smooth' });
+            }
+          }
+        });
+      });
+    }
+
+    // --- TAB ESTADOS: VER GRÁFICO EVOLUTIVO (SECCIÓN 6.2) ---
+    function getEstadosTabHTML() {
+      const p = state.participantData;
+
+      // Obtener lista de días que tienen algún estado guardado para armar el gráfico
+      const daysWithData = [];
+      const totalSemanas = p.semanasTotales || 6;
+      const totalDias = totalSemanas * 7;
+      
+      // Incluir línea base como "Día -1"
+      if (p.estadosLineaBase) {
+        daysWithData.push({ idx: -1, label: "L.B.", estados: p.estadosLineaBase });
+      }
+
+      for (let i = 0; i < totalDias; i++) {
+        if (p.estados?.[`dia${i}`]) {
+          daysWithData.push({ idx: i, label: `D${i}`, estados: p.estados[`dia${i}`] });
+        }
+      }
+
+      // Si habilitaron estados de cierre
+      if (p.estadosCierre && Object.keys(p.estadosCierre).length > 0) {
+        daysWithData.push({ idx: 999, label: "Cierre", estados: p.estadosCierre });
+      }
+
+      // Construcción del SVG del gráfico lineal evolutivo
+      let lineGraphSVG = `<p style="color:var(--text-tertiary); text-align:center; padding: 2rem;">Aún no se cargaron suficientes registros de bienestar para renderizar el gráfico evolutivo.</p>`;
+      
+      if (daysWithData.length > 1) {
+        const svgW = 600;
+        const svgH = 300;
+        const paddingLeft = 40;
+        const paddingRight = 20;
+        const paddingTop = 25;
+        const paddingBottom = 40;
+
+        const graphW = svgW - paddingLeft - paddingRight;
+        const graphH = svgH - paddingTop - paddingBottom;
+
+        // Eje X: mapear los puntos
+        const numPoints = daysWithData.length;
+        const getXCoord = (ptIdx) => paddingLeft + (ptIdx * (graphW / (numPoints - 1)));
+        
+        // Eje Y: valor 1 a 5
+        const getYCoord = (score) => {
+          const clamped = Math.max(1, Math.min(5, score));
+          // score 5 -> paddingTop, score 1 -> svgH - paddingBottom
+          return paddingTop + ((5 - clamped) * (graphH / 4));
+        };
+
+        // Generar líneas
+        let linesHTML = "";
+        
+        // Si superponer todas está activo, graficar todas con opacidad del 30%
+        if (state.chartSuperimpose) {
+          DIMENSIONES.forEach(dim => {
+            if (dim.id === state.chartDimension) return; // Se renderiza destacado después
+            let pointsStr = "";
+            daysWithData.forEach((pt, ptIdx) => {
+              const score = pt.estados[dim.id];
+              if (score !== undefined) {
+                pointsStr += `${getXCoord(ptIdx)},${getYCoord(score)} `;
+              }
+            });
+            if (pointsStr) {
+              linesHTML += `<polyline points="${pointsStr}" fill="none" stroke="var(--text-tertiary)" stroke-width="1.5" opacity="0.3" />`;
+            }
+          });
+        }
+
+        // Graficar dimensión principal destacada (100% opacidad, gruesa)
+        let mainPointsStr = "";
+        daysWithData.forEach((pt, ptIdx) => {
+          const score = pt.estados[state.chartDimension];
+          if (score !== undefined) {
+            mainPointsStr += `${getXCoord(ptIdx)},${getYCoord(score)} `;
+          }
+        });
+        
+        if (mainPointsStr) {
+          linesHTML += `<polyline points="${mainPointsStr}" fill="none" stroke="var(--purple)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />`;
+          // Dibujar dots en cada nodo
+          daysWithData.forEach((pt, ptIdx) => {
+            const score = pt.estados[state.chartDimension];
+            if (score !== undefined) {
+              linesHTML += `
+                <circle cx="${getXCoord(ptIdx)}" cy="${getYCoord(score)}" r="6" fill="var(--white)" stroke="var(--purple)" stroke-width="3" />
+                <title>${pt.label}: ${score}</title>
+              `;
+            }
+          });
+        }
+
+        // Cuadrícula y ejes
+        let gridHTML = "";
+        // Líneas horizontales de score 1 a 5
+        for (let s = 1; s <= 5; s++) {
+          const y = getYCoord(s);
+          gridHTML += `
+            <line x1="${paddingLeft}" y1="${y}" x2="${svgW - paddingRight}" y2="${y}" stroke="var(--border-soft)" stroke-width="1" />
+            <text x="${paddingLeft - 10}" y="${y + 4}" font-size="10" fill="var(--text-secondary)" text-anchor="end">${s}</text>
+          `;
+        }
+
+        // Etiquetas eje X
+        daysWithData.forEach((pt, ptIdx) => {
+          const x = getXCoord(ptIdx);
+          gridHTML += `
+            <line x1="${x}" y1="${paddingTop}" x2="${x}" y2="${svgH - paddingBottom}" stroke="var(--border-soft)" stroke-width="1" stroke-dasharray="3,3" />
+            <text x="${x}" y="${svgH - paddingBottom + 18}" font-size="10" fill="var(--text-secondary)" text-anchor="middle">${pt.label}</text>
+          `;
+        });
+
+        lineGraphSVG = `
+          <svg viewBox="0 0 ${svgW} ${svgH}" width="100%" height="auto" style="overflow: visible;">
+            <!-- Cuadrícula base -->
+            ${gridHTML}
+            <!-- Líneas de datos -->
+            ${linesHTML}
+          </svg>
+        `;
+      }
+
+      return `
+        <div class="card">
+          <h2 class="font-display" style="font-size: 1.8rem; margin-bottom: 0.5rem;">Evolución de Bienestar</h2>
+          <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Gráfico interactivo de evolución de tus dimensiones de bienestar.</p>
+
+          <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center;">
+            <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
+              <label class="form-label" for="select-chart-dim">Dimensión Principal</label>
+              <select id="select-chart-dim" class="form-control">
+                ${DIMENSIONES.map(d => `
+                  <option value="${d.id}" ${state.chartDimension === d.id ? 'selected' : ''}>${d.id}</option>
+                `).join('')}
+              </select>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1.2rem;">
+              <label class="switch">
+                <input type="checkbox" id="chk-chart-superimpose" ${state.chartSuperimpose ? 'checked' : ''}>
+                <span class="slider"></span>
+              </label>
+              <span style="font-size: 0.9rem; font-weight: 500;">Superponer las 13 dimensiones</span>
+            </div>
+          </div>
+
+          <div class="card" style="padding: 1.5rem 0.5rem;">
+            ${lineGraphSVG}
+          </div>
+
+          <!-- Si el admin habilitó la medición de cierre del participante -->
+          ${(p.estado === 'completada' || p.habilitarCierre) ? `
+            <div class="card" style="border-color: var(--green); background-color: var(--green-light); margin-top: 2rem;">
+              <h3 class="font-display" style="color: var(--green); margin-bottom: 0.5rem;">Ficha de Cierre de Dimensiones</h3>
+              <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
+                Tu acompañante ha finalizado o solicitado el cierre de tu bitácora. Completa la escala de bienestar de cierre del proceso:
+              </p>
+              
+              <form id="cierre-dimensiones-form">
+                ${DIMENSIONES.map((d, index) => {
+                  const currentScore = p.estadosCierre?.[d.id] || null;
+                  return `
+                    <div class="form-group" style="border-bottom: 1px solid var(--border-soft); padding-bottom: 1rem; margin-bottom: 1rem;">
+                      <label class="form-label" style="font-size: 0.95rem; color: var(--text-primary); font-weight: 500;">
+                        ${index + 1}. ${d.id}
+                        <span style="display: block; font-weight: normal; font-size: 0.8rem; color: var(--text-secondary);">${d.pregunta}</span>
+                      </label>
+                      <div class="dots-scale cierre-scale" data-dimension="${d.id}">
+                        ${[1, 2, 3, 4, 5].map(val => `
+                          <button type="button" class="dot-btn cierre-dot ${currentScore === val ? 'active' : ''}" data-value="${val}">${val}</button>
+                        `).join('')}
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+                
+                <button type="submit" class="btn btn-primary" style="background-color: var(--green); border-color: var(--green); width: 100%;">
+                  Guardar Valores de Cierre
+                </button>
+              </form>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function setupEstadosListeners() {
+      const selectDim = document.getElementById("select-chart-dim");
+      if (selectDim) {
+        selectDim.addEventListener("change", () => {
+          state.chartDimension = selectDim.value;
+          renderActiveTabContent();
+        });
+      }
+
+      const chkSuper = document.getElementById("chk-chart-superimpose");
+      if (chkSuper) {
+        chkSuper.addEventListener("change", () => {
+          state.chartSuperimpose = chkSuper.checked;
+          renderActiveTabContent();
+        });
+      }
+
+      // Ficha de Cierre
+      document.querySelectorAll(".cierre-dot").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const parent = btn.parentElement;
+          parent.querySelectorAll(".cierre-dot").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+        });
+      });
+
+      const cierreForm = document.getElementById("cierre-dimensiones-form");
+      if (cierreForm) {
+        cierreForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          
+          const estadosCierre = {};
+          let missing = false;
+          DIMENSIONES.forEach(d => {
+            const activeDot = document.querySelector(`.cierre-scale[data-dimension="${d.id}"] .cierre-dot.active`);
+            if (activeDot) {
+              estadosCierre[d.id] = parseInt(activeDot.getAttribute("data-value"));
+            } else {
+              missing = true;
+            }
+          });
+
+          if (missing) {
+            alert("Por favor califica todas las 13 dimensiones para guardar la evaluación de cierre.");
+            return;
+          }
+
+          state.participantData.estadosCierre = estadosCierre;
+          await saveActiveParticipant("Evaluación de cierre guardada con éxito.");
+          renderActiveTabContent();
+        });
+      }
+    }
+
+    // --- TAB VER FICHA COMPLETA (SÓLO LECTURA) ---
+    function getFichaVerHTML() {
+      const p = state.participantData;
+      return `
+        <div class="card">
+          <h2 class="font-display" style="font-size: 1.8rem; margin-bottom: 1rem;">Mi Ficha Médica e Intención</h2>
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="card" style="margin-bottom: 0; padding: 1rem;">
+              <span class="form-label">Fecha de Nacimiento</span>
+              <strong>${p.fnac}</strong>
+            </div>
+            <div class="card" style="margin-bottom: 0; padding: 1rem;">
+              <span class="form-label">Peso</span>
+              <strong>${p.peso} kg</strong>
+            </div>
+            <div class="card" style="margin-bottom: 0; padding: 1rem;">
+              <span class="form-label">Altura</span>
+              <strong>${p.altura} cm</strong>
+            </div>
+          </div>
+
+          <div class="fixed-intention-box">
+            <h4 class="font-display" style="color: var(--purple-text); font-size: 1.2rem; margin-bottom: 0.5rem;">Mi Intención Principal</h4>
+            <p style="font-size: 1.05rem; line-height: 1.5;">"${p.intencion}"</p>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+            <div>
+              <h4 style="font-weight: 500; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Beneficios esperados</h4>
+              <p>${p.beneficios || 'Sin registrar'}</p>
+            </div>
+            <div>
+              <h4 style="font-weight: 500; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Desafíos anticipados</h4>
+              <p>${p.desafios || 'Sin registrar'}</p>
+            </div>
+          </div>
+
+          <h3 class="font-display" style="font-size: 1.3rem; margin-top: 2rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-soft); padding-bottom: 0.5rem;">Consumo y Medicación</h3>
+          <p><strong>Medicamentos actuales:</strong> ${p.medicamentos || 'Ninguno'}</p>
+        </div>
+      `;
+    }
+
+    // ==========================================================================
+    // 5.9 SECCIÓN DE ACOMPAÑANTE / ADMIN PANEL (SECCIONES 7, 11 Y 12 DEL PRD)
+    // ==========================================================================
+    function renderAdminApp() {
+      const root = document.getElementById("app-root");
+
+      if (state.participantId) {
+        // Renderizar vista detallada de participante seleccionado por admin
+        renderAdminParticipantDetailView();
+        return;
+      }
+
+      // Panel Principal con Lista de Participantes
+      const activas = state.participantsList.filter(x => x.estado === 'activa');
+      const completadas = state.participantsList.filter(x => x.estado === 'completada');
+
+      root.innerHTML = `
+        <div class="admin-grid">
+          <!-- Lateral izquierdo: Crear y lista -->
+          <div>
+            <div class="card" style="padding: 1.2rem;">
+              <h3 class="font-display" style="margin-bottom: 1rem; color: var(--purple);">Nuevo Participante</h3>
+              <form id="create-participant-form">
+                <div class="form-group">
+                  <label class="form-label" for="new-name">Nombre Completo</label>
+                  <input type="text" id="new-name" class="form-control" placeholder="Ej: Sofía Rodríguez" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                  Crear Bitácora y Link
+                </button>
+              </form>
+            </div>
+
+            <div class="card" style="padding: 1.2rem;">
+              <h3 class="font-display" style="margin-bottom: 1rem;">Participantes Activos</h3>
+              <div id="active-participants-list">
+                ${activas.length === 0 ? '<p style="color: var(--text-tertiary); font-size: 0.85rem;">No hay bitácoras activas.</p>' : ''}
+                ${activas.map(p => getParticipantRowHTML(p)).join('')}
+              </div>
+
+              <h3 class="font-display" style="margin-top: 1.5rem; margin-bottom: 1rem;">Completados / Archivados</h3>
+              <div id="completed-participants-list">
+                ${completadas.length === 0 ? '<p style="color: var(--text-tertiary); font-size: 0.85rem;">No hay bitácoras completadas.</p>' : ''}
+                ${completadas.map(p => getParticipantRowHTML(p)).join('')}
+              </div>
+            </div>
+          </div>
+
+          <!-- Lateral derecho: Estadísticas Globales o Ayuda -->
+          <div>
+            <div class="card">
+              <h2 class="font-display" style="font-size: 2rem; margin-bottom: 0.5rem; color: var(--purple);">Panel Clínico de Control</h2>
+              <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-weight: 500; letter-spacing: 0.5px;">MONITOREO EN TIEMPO REAL PARA PROCESOS CON MICRODOSIS</p>
+              
+              <!-- Estadísticas Globales rápidas -->
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <div class="card" style="margin-bottom: 0; border-color: var(--purple);">
+                  <span class="form-label">Total Participantes</span>
+                  <span class="font-display" style="font-size: 2.2rem; color: var(--purple-text);">${state.participantsList.length}</span>
+                </div>
+                <div class="card" style="margin-bottom: 0; border-color: var(--green);">
+                  <span class="form-label">Procesos Activos</span>
+                  <span class="font-display" style="font-size: 2.2rem; color: var(--green);">${activas.length}</span>
+                </div>
+                <div class="card" style="margin-bottom: 0;">
+                  <span class="form-label">Adherencia Promedio</span>
+                  <span class="font-display" style="font-size: 2.2rem;">
+                    ${calculateGlobalAdherence()}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3 class="font-display" style="margin-bottom: 1rem;">Instrucciones de Acompañamiento</h3>
+              <ol style="margin-left: 1.5rem; font-size: 0.95rem; line-height: 1.7;">
+                <li><strong>Generá una nueva bitácora</strong> ingresando el nombre del participante a la izquierda.</li>
+                <li><strong>Compartile el link único</strong> autogenerado para que complete su ficha inicial.</li>
+                <li>En cada sesión semanal, abrí la ficha del participante y desplegá las <strong>Guias de Sesión</strong> predefinidas para orientar tu consulta.</li>
+                <li>En la Sesión 2 completá la <strong>Rueda de la Vida (Inicio)</strong>.</li>
+                <li>En la Sesión 6 completá la <strong>Rueda de la Vida (Cierre)</strong> e imprimí el <strong>Informe PDF</strong> final en un clic.</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      `;
+
+      setupAdminDashboardListeners();
+    }
+
+    function getParticipantRowHTML(p) {
+      const diasT = (p.semanasTotales || 6) * 7;
+      const progressPercent = Math.min(100, Math.floor(((p.diasRegistrados || 0) / diasT) * 100));
+      const activeClass = state.participantId === p.id ? 'active' : '';
+
+      return `
+        <div class="participant-row ${activeClass}" data-id="${p.id}">
+          <div style="flex: 1;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong style="font-size: 0.95rem; color: var(--text-primary);">${p.nombre}</strong>
+              <span class="badge-estado ${p.estado}" style="font-size: 0.6rem;">${p.estado}</span>
+            </div>
+            <div class="progress-bar-container">
+              <div class="progress-bar" style="width: ${progressPercent}%;"></div>
+            </div>
+            <span style="font-size: 0.7rem; color: var(--text-secondary);">
+              Registros: ${p.diasRegistrados || 0}/${diasT} días (${progressPercent}%) 
+            </span>
+          </div>
+        </div>
+      `;
+    }
+
+    function calculateGlobalAdherence() {
+      if (state.participantsList.length === 0) return 0;
+      let sum = 0;
+      state.participantsList.forEach(p => {
+        const diasT = (p.semanasTotales || 6) * 7;
+        sum += ((p.diasRegistrados || 0) / diasT) * 100;
+      });
+      return Math.floor(sum / state.participantsList.length);
+    }
+
+    function setupAdminDashboardListeners() {
+      // Clic en fila de participante
+      document.querySelectorAll(".participant-row").forEach(row => {
+        row.addEventListener("click", () => {
+          const id = row.getAttribute("data-id");
+          // Agregar parámetro a URL sin recargar para soportar recarga directa y routing
+          const newUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?admin_view=${id}`;
+          window.history.pushState({ path: newUrl }, '', newUrl);
+          
+          state.participantId = id;
+          state.participantData = state.participantsList.find(x => x.id === id);
+          renderAdminParticipantDetailView();
+        });
+      });
+
+      // Crear nuevo participante
+      const form = document.getElementById("create-participant-form");
+      if (form) {
+        form.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const name = document.getElementById("new-name").value.trim();
+          if (!name) return;
+
+          // Generar ID de 8 chars base36 random
+          const newId = Math.random().toString(36).substring(2, 10);
+          
+          const newParticipant = {
+            nombre: name,
+            creadoEn: new Date().toISOString(),
+            estado: "activa",
+            fichaCompletada: false,
+            diasRegistrados: 0,
+            ultimoRegistro: null,
+            semanasTotales: 6, // 6 semanas por defecto
+            registros: {},
+            estados: {},
+            dosis: {},
+            ruedaVida: {
+              inicio: {},
+              cierre: {}
+            },
+            notasAdmin: {},
+            informeCierre: {}
+          };
+
+          try {
+            if (!offlineMode) {
+              const docRef = doc(db, "bitacoras", newId);
+              await setDoc(docRef, newParticipant);
+            } else {
+              localDb.set(newId, newParticipant);
+            }
+            
+            showToast(`Creado participante: ${name}`);
+            
+            // Generar y mostrar link para compartir
+            const shareUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?b=${newId}`;
+            
+            // Renderizar alerta de link
+            const container = document.getElementById("app-root");
+            const div = document.createElement("div");
+            div.className = "card";
+            div.style.borderColor = "var(--purple)";
+            div.style.backgroundColor = "var(--purple-light)";
+            div.style.marginTop = "1rem";
+            div.innerHTML = `
+              <h4 class="font-display" style="color: var(--purple-text); margin-bottom: 0.5rem;">¡Bitácora Generada con Éxito!</h4>
+              <p style="font-size: 0.9rem; margin-bottom: 1rem;">Compartí esta URL única con el participante. No requiere contraseña ni registro previo:</p>
+              <div class="form-group" style="display:flex; gap:0.5rem;">
+                <input type="text" value="${shareUrl}" id="share-link-input" class="form-control" readonly>
+                <button class="btn btn-primary" id="btn-copy-share-link">Copiar Link</button>
+              </div>
+              <button class="btn btn-secondary" id="btn-back-dashboard" style="margin-top: 0.5rem;">Volver al Panel</button>
+            `;
+            
+            container.insertBefore(div, container.firstChild);
+            
+            document.getElementById("btn-copy-share-link").addEventListener("click", () => {
+              const input = document.getElementById("share-link-input");
+              input.select();
+              document.execCommand("copy");
+              showToast("Copiado al portapapeles");
+            });
+
+            document.getElementById("btn-back-dashboard").addEventListener("click", () => {
+              loadAdminDashboard();
+            });
+
+            form.reset();
+          } catch (e) {
+            console.error("Error al crear participante:", e);
+            alert("Error al intentar guardar la bitácora en la base de datos.");
+          }
+        });
+      }
+    }
+
+    // --- DETALLE DE PARTICIPANTE PARA EL ADMIN (SECCIÓN 7.1) ---
+    function renderAdminParticipantDetailView() {
+      const root = document.getElementById("app-root");
+      const p = state.participantData;
+
+      if (!p) {
+        renderError("No se encontraron los datos del participante solicitado.");
+        return;
+      }
+
+      root.innerHTML = `
+        <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.8rem;">
+          <div>
+            <button class="btn btn-secondary" id="btn-admin-back-list" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; margin-bottom: 0.5rem;">
+              ← Volver al Panel
+            </button>
+            <h1 class="font-display" style="font-size: 2.2rem; display: flex; align-items: center; gap: 0.8rem;">
+              ${p.nombre}
+              <span class="badge-estado ${p.estado}" style="font-size: 0.75rem;">${p.estado}</span>
+            </h1>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.4rem;">
+              <span style="font-size: 0.8rem; color: var(--text-secondary);">Enlace único:</span>
+              <input type="text" value="${window.location.protocol}//${window.location.host}${window.location.pathname}?b=${p.id}" id="share-link-input-detail" class="form-control" style="width: 250px; padding: 0.2rem 0.5rem; font-size: 0.75rem; border-color: var(--border-soft); background-color: var(--bg-app); border-radius: 4px; display: inline-block; height: auto;" readonly>
+              <button class="btn" id="btn-copy-share-link-detail" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; color: var(--purple-text); background-color: var(--purple-light); border-radius: 4px; border: none; font-weight: bold; cursor: pointer;">Copiar</button>
+            </div>
+          </div>
+          
+          <div style="display:flex; gap:0.6rem; flex-wrap: wrap;">
+            <!-- Extensión de semanas (Sección 7.3) -->
+            <div class="card" style="margin-bottom:0; padding:0.4rem 0.8rem; display:flex; align-items:center; gap:0.6rem;">
+              <span style="font-size:0.8rem; font-weight:500;">Duración: ${p.semanasTotales || 6} semanas</span>
+              <button class="btn btn-primary" id="btn-admin-extend-weeks" style="padding: 0.2rem 0.5rem; font-size:0.75rem;">+ Extender Semana</button>
+            </div>
+
+            <!-- Completar / Archivar Proceso -->
+            ${p.estado === 'activa' ? `
+              <button class="btn btn-primary" id="btn-admin-complete-process" style="background-color: var(--green);">
+                Completar Proceso
+              </button>
+            ` : `
+              <button class="btn btn-secondary" id="btn-admin-reopen-process">
+                Reabrir Proceso
+              </button>
+            `}
+
+            <!-- Eliminar Bitácora -->
+            <button class="btn btn-danger" id="btn-admin-delete-bitacora" style="padding: 0.4rem 0.8rem;">
+              Eliminar
+            </button>
+          </div>
+        </div>
+
+        <!-- 11.1 INTENCIÓN SIEMPRE VISIBLE EN VISTA CLINICA -->
+        <div class="fixed-intention-box" style="margin-bottom: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h4 class="font-display" style="color: var(--purple-text); font-size: 1.1rem; margin-bottom: 0.2rem;">
+              Intención del Participante
+            </h4>
+            <button class="btn" id="btn-toggle-clinical-intention-details" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; color: var(--purple-text); background: none;">
+              [Ver Beneficios y Desafíos]
+            </button>
+          </div>
+          <p style="font-size: 1rem; line-height: 1.4; font-style: italic;">"${p.intencion || 'Ficha aún no completada por el participante'}"</p>
+          
+          <div id="clinical-intention-details" style="display: none; margin-top: 0.8rem; border-top: 1px solid var(--border-soft); padding-top: 0.8rem; font-size: 0.85rem;">
+            <p><strong>Beneficios esperados:</strong> ${p.beneficios || 'Sin registrar'}</p>
+            <p style="margin-top: 0.4rem;"><strong>Desafíos anticipados:</strong> ${p.desafios || 'Sin registrar'}</p>
+          </div>
+        </div>
+
+        <!-- Panel de 4 Tabs de Acompañante -->
+        <nav class="tabs-pills">
+          <button class="tab-pill ${state.activeTab === 'ficha' ? 'active' : ''}" data-tab="ficha">Ficha</button>
+          <button class="tab-pill ${state.activeTab === 'registros' ? 'active' : ''}" data-tab="registros">Registros Diarios</button>
+          <button class="tab-pill ${state.activeTab === 'estados' ? 'active' : ''}" data-tab="estados">Dimensión Evolutiva</button>
+          <button class="tab-pill ${state.activeTab === 'dosis' ? 'active' : ''}" data-tab="dosis">Dosis & Rueda de la Vida</button>
+        </nav>
+
+        <div id="admin-tab-content-container">
+          <!-- Renderizado dinámico de la tab del acompañante -->
+        </div>
+      `;
+
+      // Eventos globales del detalle de participante
+      document.getElementById("btn-admin-back-list").addEventListener("click", () => {
+        // Quitar parámetro de la URL
+        const newUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}`;
+        window.history.pushState({ path: newUrl }, '', newUrl);
+        state.participantId = null;
+        loadAdminDashboard();
+      });
+
+      const btnCopyDetail = document.getElementById("btn-copy-share-link-detail");
+      if (btnCopyDetail) {
+        btnCopyDetail.addEventListener("click", () => {
+          const input = document.getElementById("share-link-input-detail");
+          input.select();
+          document.execCommand("copy");
+          showToast("Enlace de bitácora copiado");
+        });
+      }
+
+      document.getElementById("btn-toggle-clinical-intention-details").addEventListener("click", () => {
+        const details = document.getElementById("clinical-intention-details");
+        details.style.display = details.style.display === "none" ? "block" : "none";
+      });
+
+      document.getElementById("btn-admin-extend-weeks").addEventListener("click", async () => {
+        state.participantData.semanasTotales = (state.participantData.semanasTotales || 6) + 1;
+        await saveActiveParticipant("Duración del proceso extendida en 1 semana.");
+        renderAdminParticipantDetailView();
+      });
+
+      const btnComplete = document.getElementById("btn-admin-complete-process");
+      if (btnComplete) {
+        btnComplete.addEventListener("click", async () => {
+          state.participantData.estado = 'completada';
+          await saveActiveParticipant("Proceso finalizado. El participante ha pasado a modo sólo lectura.");
+          renderAdminParticipantDetailView();
+        });
+      }
+
+      const btnReopen = document.getElementById("btn-admin-reopen-process");
+      if (btnReopen) {
+        btnReopen.addEventListener("click", async () => {
+          state.participantData.estado = 'activa';
+          await saveActiveParticipant("Proceso reabierto. Habilitado registro del participante.");
+          renderAdminParticipantDetailView();
+        });
+      }
+
+      document.getElementById("btn-admin-delete-bitacora").addEventListener("click", async () => {
+        if (confirm(`¿Seguro que deseas eliminar definitivamente la bitácora de ${p.nombre}? Esta acción inhabilitará el enlace de acceso.`)) {
+          try {
+            if (!offlineMode) {
+              await deleteDoc(doc(db, "bitacoras", p.id));
+            } else {
+              localDb.delete(p.id);
+            }
+            showToast("Bitácora eliminada permanentemente.");
+            state.participantId = null;
+            loadAdminDashboard();
+          } catch (e) {
+            console.error("Error deleting document:", e);
+            alert("No se pudo eliminar de la base de datos.");
+          }
+        }
+      });
+
+      // Registrar clics en tabs
+      document.querySelectorAll(".tab-pill").forEach(tabBtn => {
+        tabBtn.addEventListener("click", () => {
+          state.activeTab = tabBtn.getAttribute("data-tab");
+          renderAdminParticipantDetailView();
+        });
+      });
+
+      renderAdminTabContent();
+    }
+
+    function renderAdminTabContent() {
+      const container = document.getElementById("admin-tab-content-container");
+      if (!container) return;
+
+      const p = state.participantData;
+
+      switch (state.activeTab) {
+        case 'ficha':
+          container.innerHTML = getFichaVerHTML();
+          break;
+        case 'registros':
+          container.innerHTML = getAdminRegistrosTabHTML();
+          setupAdminRegistrosListeners();
+          break;
+        case 'estados':
+          container.innerHTML = getEstadosTabHTML();
+          setupEstadosListeners();
+          break;
+        case 'dosis':
+          container.innerHTML = getAdminDosisYRuedaTabHTML();
+          setupAdminDosisYRuedaListeners();
+          break;
+      }
+    }
+
+    // --- TAB REGISTROS CLINICOS (ADMIN VIEW - SECCIONES 11 Y 12) ---
+    function getAdminRegistrosTabHTML() {
+      const p = state.participantData;
+      const days = getProcessDays();
+      
+      const registro = p.registros?.[`dia${state.selectedDayIdx}`] || null;
+      const notasAdmin = p.notasAdmin?.[`dia${state.selectedDayIdx}`] || {};
+
+      return `
+        <div style="display: grid; grid-template-columns: 240px 1fr; gap: 1.5rem;">
+          <!-- Selector lateral de días -->
+          <div class="card" style="padding: 0.8rem; max-height: 500px; overflow-y: auto;">
+            <h4 style="font-weight: 500; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.6rem; padding: 0.2rem;">Días del Proceso</h4>
+            ${days.map(d => {
+              const hasReg = p.registros?.[`dia${d.idx}`] ? true : false;
+              const hasNotes = p.notasAdmin?.[`dia${d.idx}`]?.texto ? true : false;
+              return `
+                <div class="participant-row ${state.selectedDayIdx === d.idx ? 'active' : ''}" 
+                     style="padding: 0.5rem; margin-bottom: 0.3rem;"
+                     data-select-day-idx="${d.idx}">
+                  <span style="font-size: 0.85rem; font-weight: 500;">Día ${d.idx}</span>
+                  <div style="display:flex; gap:0.25rem;">
+                    ${hasReg ? `<span style="width: 6px; height: 6px; border-radius:50%; background-color: var(--green);" title="Registro participante"></span>` : ''}
+                    ${hasNotes ? `<span style="width: 6px; height: 6px; border-radius:50%; background-color: var(--purple);" title="Notas clínicas guardadas"></span>` : ''}
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          <!-- Formulario de notas clínicas y guías predefinidas -->
+          <div>
+            <!-- 11.2 GUÍA DE SESIÓN DESPLEGABLE -->
+            <div class="card" style="padding: 1.2rem; border-color: var(--purple-light);">
+              <h3 class="font-display" style="font-size: 1.3rem; margin-bottom: 0.8rem; color: var(--purple-text);">Guías de Sesión de Acompañamiento</h3>
+              <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                La sesión de la semana correspondiente al día seleccionado está destacada. Presioná para desplegar la pauta predefinida.
+              </p>
+              
+              <div id="session-accordion">
+                ${[1, 2, 3, 4, 5, 6].map(num => {
+                  const currentDayIdx = state.selectedDayIdx;
+                  // Calcular en qué semana cae el día seleccionado
+                  const currentWeekIdx = Math.floor(currentDayIdx / 7) + 1;
+                  // Resaltar la sesión 1 en semana 1, sesión 2 en semana 2, etc. (sesión 3, 4 y 5 en semanas intermedias, sesión 6 en la de cierre)
+                  let isCurrent = false;
+                  if (num === 1 && currentWeekIdx === 1) isCurrent = true;
+                  else if (num === 2 && currentWeekIdx === 2) isCurrent = true;
+                  else if ((num === 3 || num === 4 || num === 5) && currentWeekIdx >= 3 && currentWeekIdx <= 5 && (num - 2) === (currentWeekIdx - 2)) isCurrent = true;
+                  else if (num === 6 && currentWeekIdx >= 6) isCurrent = true;
+
+                  return `
+                    <div class="session-item">
+                      <button class="session-trigger ${isCurrent ? 'current-highlight' : ''}" data-session-num="${num}">
+                        <span>Sesión ${num} ${getNombreSesion(num)}</span>
+                        <span>▼</span>
+                      </button>
+                      <div class="session-content" id="session-content-${num}">
+                        ${getGuiaSesionHTML(num)}
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+
+            <!-- Registro diario enviado por el participante -->
+            <div class="card">
+              <h3 class="font-display" style="font-size: 1.4rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-soft); padding-bottom: 0.4rem;">
+                Registro del Participante — Día ${state.selectedDayIdx}
+              </h3>
+              
+              ${registro ? `
+                <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; font-size: 0.95rem;">
+                  <p><strong>¿Cómo te sentiste hoy?:</strong> ${registro.comoSintio || '-'}</p>
+                  <p><strong>¿Algo distinto a lo habitual?:</strong> ${registro.algoDistinto || '-'}</p>
+                  <p><strong>Alimentación y energía:</strong> ${registro.alimentacion || '-'}</p>
+                  <p><strong>Sueños o sincronicidades:</strong> ${registro.suenos || '-'}</p>
+                  <p><strong>Cambios en medicación:</strong> ${registro.medicacion || '-'}</p>
+                  <p><strong>Sexualidad:</strong> ${registro.sexualidad || '-'}</p>
+                  ${p.dosis?.[state.selectedDayIdx] ? `<p><strong>Nota sobre dosis:</strong> ${p.dosis[state.selectedDayIdx].nota || '-'}</p>` : ''}
+                </div>
+              ` : `<p style="color: var(--text-tertiary);">El participante aún no completó su registro de este día.</p>`}
+            </div>
+
+            <!-- Notas del Acompañante por Día -->
+            <div class="card">
+              <h3 class="font-display" style="font-size: 1.4rem; margin-bottom: 1rem;">Notas Clínicas (Acompañante)</h3>
+              
+              <form id="admin-clinical-notes-form">
+                <div class="form-group">
+                  <label class="form-label" for="adm-note-text">Anotaciones de la sesión del día</label>
+                  <textarea id="adm-note-text" class="form-control" placeholder="Escribí notas del encuentro, progresos detectados o acciones acordadas...">${notasAdmin.texto || ''}</textarea>
+                </div>
+
+                <!-- 11.4 INTERPRETACIÓN DE SUEÑOS CLÍNICOS -->
+                <div class="form-group" style="background-color: var(--purple-light); padding: 1rem; border-radius: 8px;">
+                  <label class="form-label" style="color: var(--purple-text); font-weight: bold;" for="adm-dream-interpret">
+                    Interpretación de Sueños / Sincronicidades
+                  </label>
+                  <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.6rem;">
+                    Disponible clínicamente porque el participante cargó sueños en su bitácora diaria.
+                  </p>
+                  <textarea id="adm-dream-interpret" class="form-control" placeholder="Anotá la interpretación clínica del sueño de este día...">${notasAdmin.interpretacionSuenos || ''}</textarea>
+                </div>
+
+                <div style="display:flex; justify-content: flex-end;">
+                  <button type="submit" class="btn btn-primary">Guardar Notas Clínicas</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function getNombreSesion(num) {
+      switch (num) {
+        case 1: return "- Bienvenida e Intención";
+        case 2: return "- Rueda de la Vida (Inicio)";
+        case 3: return "- Insights y Desafíos I";
+        case 4: return "- Insights y Desafíos II";
+        case 5: return "- Insights y Desafíos III";
+        case 6: return "- Cierre del Proceso";
+        default: return "";
+      }
+    }
+
+    function getGuiaSesionHTML(num) {
+      // Contenidos predefinidos de la Sección 12 del PRD
+      switch (num) {
+        case 1:
+          return `
+            <ol>
+              <li>Revisar línea base del participante antes de la sesión.</li>
+              <li>Encuadre de la sesión.</li>
+              <li>Responsabilidad y compromiso con el proceso: intención, soporte terapéutico.</li>
+              <li>Transmitir la importancia de no tomar decisiones importantes durante el proceso.</li>
+              <li>Aterrizar la intención con preguntas guía:
+                <ul>
+                  <li>¿Cuál es tu intención? ¿Qué significa para ti? ¿Para qué querés alcanzarla?</li>
+                  <li>¿Cómo te vas a sentir cuando la alcances? ¿Cómo vas a saber que la estás alcanzando?</li>
+                </ul>
+              </li>
+              <li>Explicar: calibración, dosificación, días de toma, duración total aproximada.</li>
+              <li>Acuerdo de confidencialidad y Cierre de sesión.</li>
+            </ol>
+          `;
+        case 2:
+          return `
+            <ol>
+              <li>Encuadrar la sesión: explicar qué es la Rueda de la Vida y para qué sirve.</li>
+              <li>Invitar al participante a tener lápiz y papel - dibujar solo el círculo.</li>
+              <li>Mostrar la ilustración de la rueda y explicar la escala 1-10 por área.</li>
+              <li>Escucha activa mientras responde - tomar notas para contrastar con la línea base.</li>
+              <li>Invitar a reflexionar durante la semana sobre las áreas exploradas y su relación con la intención.</li>
+            </ol>
+            <p style="margin-top: 0.8rem; font-weight: bold; color: var(--purple-text);">
+              * En esta sesión, completá la Rueda de la Vida (Inicio) en la pestaña "Dosis & Rueda de la Vida".
+            </p>
+          `;
+        case 3:
+        case 4:
+        case 5:
+          return `
+            <p><strong>Parte 1 - Apertura:</strong> Cómo se sintió durante la semana, cuáles fueron sus insights, desafíos o acciones acordadas.</p>
+            <p style="margin-top: 0.5rem;"><strong>Parte 2 - Objetivo de sesión:</strong> Definir el insight o desafío a trabajar:
+              <ul>
+                <li>¿Cómo se siente con eso? ¿Lo beneficia o es un obstáculo? ¿Cómo es actualmente?</li>
+                <li>¿Con qué recursos personales cuenta? ¿Qué acción tomará?</li>
+              </ul>
+            </p>
+            <p style="margin-top: 0.5rem;"><strong>Parte 3 - Plan de acción:</strong> ¿Cuál sería su primer paso? ¿Cuánto esfuerzo y compromiso del 1 al 10 le toma? ¿Qué hará si surgen obstáculos?</p>
+            <p style="margin-top: 0.5rem;"><strong>Parte 4 - Cierre:</strong> ¿Qué se lleva de la sesión? ¿En qué otros aspectos de su vida le sirve?</p>
+          `;
+        case 6:
+          return `
+            <ol>
+              <li>Antes de la sesión: analizar bitácora + notas + rescatar aprendizajes e insights más relevantes.</li>
+              <li>Encuadrar: sesión de cierre - conversarán sobre el aprendizaje del proceso completo.</li>
+              <li>Mencionar logros - ¿cómo se siente con ellos? ¿cómo se conectan con su intención?</li>
+              <li>¿Qué es lo más importante que se lleva del proceso con microdosis?</li>
+              <li>Agradecer la confianza, felicitar y dejar abierta la posibilidad de un proceso siguiente.</li>
+            </ol>
+            <p style="margin-top: 0.8rem; font-weight: bold; color: var(--green);">
+              * En esta sesión, completá la Rueda de la Vida (Cierre) e integrá el Informe de Cierre para exportar el PDF final.
+            </p>
+          `;
+        default: return "";
+      }
+    }
+
+    function setupAdminRegistrosListeners() {
+      // Cambio de día en el lateral
+      document.querySelectorAll("[data-select-day-idx]").forEach(row => {
+        row.addEventListener("click", () => {
+          state.selectedDayIdx = parseInt(row.getAttribute("data-select-day-idx"));
+          renderAdminParticipantDetailView();
+        });
+      });
+
+      // Acordeón de guías
+      document.querySelectorAll(".session-trigger").forEach(trigger => {
+        trigger.addEventListener("click", () => {
+          const num = trigger.getAttribute("data-session-num");
+          const content = document.getElementById(`session-content-${num}`);
+          const isVisible = content.classList.contains("show");
+          
+          document.querySelectorAll(".session-content").forEach(c => c.classList.remove("show"));
+          
+          if (!isVisible) {
+            content.classList.add("show");
+          }
+        });
+      });
+
+      // Guardado de notas clínicas
+      const notesForm = document.getElementById("admin-clinical-notes-form");
+      if (notesForm) {
+        notesForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          
+          const textVal = document.getElementById("adm-note-text").value;
+          const dreamVal = document.getElementById("adm-dream-interpret").value;
+
+          if (!state.participantData.notasAdmin) state.participantData.notasAdmin = {};
+          state.participantData.notasAdmin[`dia${state.selectedDayIdx}`] = {
+            texto: textVal,
+            fecha: new Date().toISOString(),
+            interpretacionSuenos: dreamVal
+          };
+
+          await saveActiveParticipant("Notas clínicas guardadas con éxito");
+          renderAdminParticipantDetailView();
+        });
+      }
+    }
+
+    // --- TAB DOSIS & RUEDA DE LA VIDA (ADMIN VIEW - SECCIÓN 13 Y 14) ---
+    function getAdminDosisYRuedaTabHTML() {
+      const p = state.participantData;
+
+      // Calcular Rueda de la Vida SVG
+      const svgRadar = buildRadarChartSVG(p.ruedaVida);
+
+      return `
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 1.5rem; flex-wrap: wrap;">
+          <!-- Columna Izquierda: Formularios Rueda de la Vida -->
+          <div>
+            <div class="card">
+              <h3 class="font-display" style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--purple);">
+                Rueda de la Vida (Inicio - Sesión 2)
+              </h3>
+              <form id="rueda-inicio-form">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
+                  ${AREAS_RUEDA.map(area => `
+                    <div class="form-group">
+                      <label class="form-label" style="font-size: 0.75rem;" for="rueda-ini-${area}">${area}</label>
+                      <input type="number" min="1" max="10" id="rueda-ini-${area}" class="form-control" placeholder="1-10" required 
+                             value="${p.ruedaVida?.inicio?.[area] || ''}">
+                    </div>
+                  `).join('')}
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                  Guardar Rueda Inicio
+                </button>
+              </form>
+            </div>
+
+            <div class="card">
+              <h3 class="font-display" style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--green);">
+                Rueda de la Vida (Cierre - Sesión 6)
+              </h3>
+              <form id="rueda-cierre-form">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
+                  ${AREAS_RUEDA.map(area => `
+                    <div class="form-group">
+                      <label class="form-label" style="font-size: 0.75rem;" for="rueda-cie-${area}">${area}</label>
+                      <input type="number" min="1" max="10" id="rueda-cie-${area}" class="form-control" placeholder="1-10" required
+                             value="${p.ruedaVida?.cierre?.[area] || ''}">
+                    </div>
+                  `).join('')}
+                </div>
+                
+                <div style="display:flex; align-items:center; gap:0.5rem; margin: 1rem 0;">
+                  <label class="switch">
+                    <input type="checkbox" id="chk-admin-enable-cierre" ${p.habilitarCierre ? 'checked' : ''}>
+                    <span class="slider"></span>
+                  </label>
+                  <span style="font-size: 0.85rem; font-weight: 500;">Habilitar carga de bienestar de cierre al participante</span>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="background-color: var(--green); border-color: var(--green); width: 100%;">
+                  Guardar Rueda Cierre
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Columna Derecha: Visualización del Radar y Exportación de PDF -->
+          <div>
+            <div class="card" style="text-align: center;">
+              <h3 class="font-display" style="margin-bottom: 1rem;">Visualización de la Rueda de la Vida</h3>
+              <div class="svg-chart-container">
+                ${svgRadar}
+              </div>
+              <div style="display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; font-size: 0.8rem;">
+                <span style="display:flex; align-items:center; gap:0.3rem;"><span style="width:12px; height:12px; border-radius:3px; background-color: var(--purple);"></span> Rueda Inicio</span>
+                <span style="display:flex; align-items:center; gap:0.3rem;"><span style="width:12px; height:12px; border-radius:3px; background-color: var(--green);"></span> Rueda Cierre</span>
+              </div>
+            </div>
+
+            <!-- Informe de Cierre y Botón de PDF -->
+            <div class="card">
+              <h3 class="font-display" style="font-size: 1.5rem; margin-bottom: 1rem;">Informe Clínico e Integración</h3>
+              
+              <form id="admin-clinical-report-form">
+                <div class="form-group">
+                  <label class="form-label" for="rep-texto">Procesos de Cambio y Componentes de Integración</label>
+                  <textarea id="rep-texto" class="form-control" placeholder="Escribí un resumen clínico detallado del proceso, cambios conductuales observados, etc..." required>${p.informeCierre?.texto || ''}</textarea>
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label" for="rep-recomendacion">Recomendación Final</label>
+                  <textarea id="rep-recomendacion" class="form-control" placeholder="Indicaciones terapéuticas de cara al futuro..." required>${p.informeCierre?.recomendacion || ''}</textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 1rem;">
+                  Guardar Datos de Informe
+                </button>
+              </form>
+
+              <button class="btn btn-primary" id="btn-admin-export-pdf" style="width: 100%; padding: 0.8rem; background-color: var(--green); border-color: var(--green);">
+                Generar Reporte PDF (A4 Vectorial)
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function setupAdminDosisYRuedaListeners() {
+      // Guardar Rueda Inicio
+      const iniForm = document.getElementById("rueda-inicio-form");
+      if (iniForm) {
+        iniForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const values = {};
+          AREAS_RUEDA.forEach(area => {
+            values[area] = parseInt(document.getElementById(`rueda-ini-${area}`).value);
+          });
+          
+          if (!state.participantData.ruedaVida) state.participantData.ruedaVida = {};
+          state.participantData.ruedaVida.inicio = values;
+
+          await saveActiveParticipant("Rueda de la Vida (Inicio) guardada con éxito.");
+          renderAdminParticipantDetailView();
+        });
+      }
+
+      // Guardar Rueda Cierre + Habilitar Cierre
+      const cieForm = document.getElementById("rueda-cierre-form");
+      if (cieForm) {
+        cieForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const values = {};
+          AREAS_RUEDA.forEach(area => {
+            values[area] = parseInt(document.getElementById(`rueda-cie-${area}`).value);
+          });
+          
+          if (!state.participantData.ruedaVida) state.participantData.ruedaVida = {};
+          state.participantData.ruedaVida.cierre = values;
+          state.participantData.habilitarCierre = document.getElementById("chk-admin-enable-cierre").checked;
+
+          await saveActiveParticipant("Rueda de la Vida (Cierre) guardada con éxito.");
+          renderAdminParticipantDetailView();
+        });
+      }
+
+      // Guardar Reporte clínico
+      const reportForm = document.getElementById("admin-clinical-report-form");
+      if (reportForm) {
+        reportForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          state.participantData.informeCierre = {
+            texto: document.getElementById("rep-texto").value,
+            recomendacion: document.getElementById("rep-recomendacion").value,
+            fechaRedaccion: new Date().toISOString()
+          };
+
+          await saveActiveParticipant("Informe clínico guardado con éxito.");
+          renderAdminParticipantDetailView();
+        });
+      }
+
+      // Exportar a PDF (Sección 13)
+      const btnPdf = document.getElementById("btn-admin-export-pdf");
+      if (btnPdf) {
+        btnPdf.addEventListener("click", () => {
+          exportClinicalReportToPDF();
+        });
+      }
+    }
+
+    // ==========================================================================
+    // 5.10 CONSTRUCCIÓN MATEMÁTICA DE RADAR CHART SVG EN TIEMPO REAL (SECCIÓN 6.1)
+    // ==========================================================================
+    function buildRadarChartSVG(ruedaVida) {
+      const size = 300;
+      const center = size / 2;
+      const radius = 110;
+      
+      const numAxes = AREAS_RUEDA.length;
+      const angleStep = (Math.PI * 2) / numAxes;
+
+      // Octágonos concéntricos de escala 1 a 10
+      let octagonsHTML = "";
+      for (let s = 2; s <= 10; s += 2) {
+        const r = (s / 10) * radius;
+        let points = [];
+        for (let i = 0; i < numAxes; i++) {
+          const angle = i * angleStep - Math.PI / 2;
+          const x = center + r * Math.cos(angle);
+          const y = center + r * Math.sin(angle);
+          points.push(`${x},${y}`);
+        }
+        octagonsHTML += `<polygon points="${points.join(' ')}" fill="none" stroke="var(--border-soft)" stroke-width="1" />`;
+      }
+
+      // Ejes y Etiquetas radiales
+      let axesHTML = "";
+      for (let i = 0; i < numAxes; i++) {
+        const angle = i * angleStep - Math.PI / 2;
+        const xOuter = center + radius * Math.cos(angle);
+        const yOuter = center + radius * Math.sin(angle);
+        
+        // Colocar texto ligeramente fuera del radio
+        const textDist = radius + 22;
+        const xText = center + textDist * Math.cos(angle);
+        const yText = center + textDist * Math.sin(angle) + 4; // Ajuste vertical
+        
+        let textAnchor = "middle";
+        if (Math.cos(angle) > 0.1) textAnchor = "start";
+        else if (Math.cos(angle) < -0.1) textAnchor = "end";
+
+        const textLines = AREAS_RUEDA[i].split(" / ");
+
+        axesHTML += `
+          <line x1="${center}" y1="${center}" x2="${xOuter}" y2="${yOuter}" stroke="var(--border-soft)" stroke-width="1.5" />
+          <text x="${xText}" y="${yText}" font-size="9" font-family="var(--font-sans)" font-weight="500" fill="var(--text-secondary)" text-anchor="${textAnchor}">
+            ${textLines.map((line, lIdx) => `<tspan x="${xText}" dy="${lIdx > 0 ? 9 : 0}">${line}</tspan>`).join('')}
+          </text>
+        `;
+      }
+
+      // Polígonos de Datos (Inicio en Violeta, Cierre en Verde)
+      let polygonsDataHTML = "";
+      
+      // 1. Rueda Inicio
+      if (ruedaVida?.inicio && Object.keys(ruedaVida.inicio).length > 0) {
+        let points = [];
+        AREAS_RUEDA.forEach((area, i) => {
+          const score = ruedaVida.inicio[area] || 0;
+          const r = (score / 10) * radius;
+          const angle = i * angleStep - Math.PI / 2;
+          const x = center + r * Math.cos(angle);
+          const y = center + r * Math.sin(angle);
+          points.push(`${x},${y}`);
+        });
+        polygonsDataHTML += `
+          <polygon points="${points.join(' ')}" fill="rgba(83, 74, 183, 0.22)" stroke="var(--purple)" stroke-width="3" stroke-linejoin="round" />
+        `;
+      }
+
+      // 2. Rueda Cierre
+      if (ruedaVida?.cierre && Object.keys(ruedaVida.cierre).length > 0) {
+        let points = [];
+        AREAS_RUEDA.forEach((area, i) => {
+          const score = ruedaVida.cierre[area] || 0;
+          const r = (score / 10) * radius;
+          const angle = i * angleStep - Math.PI / 2;
+          const x = center + r * Math.cos(angle);
+          const y = center + r * Math.sin(angle);
+          points.push(`${x},${y}`);
+        });
+        polygonsDataHTML += `
+          <polygon points="${points.join(' ')}" fill="rgba(45, 122, 79, 0.22)" stroke="var(--green)" stroke-width="3" stroke-linejoin="round" />
+        `;
+      }
+
+      return `
+        <svg viewBox="0 0 ${size} ${size}" width="100%" height="auto" style="overflow: visible;">
+          ${octagonsHTML}
+          ${axesHTML}
+          ${polygonsDataHTML}
+        </svg>
+      `;
+    }
+
+    function exportClinicalReportToPDF() {
+      const p = state.participantData;
+      if (!p.informeCierre || !p.informeCierre.texto) {
+        alert("Por favor completa los campos del Informe Clínico antes de exportar el PDF.");
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4"
+      });
+
+      const cPurple = [83, 74, 183];
+      const cGreen = [45, 122, 79];
+      const cRed = [201, 59, 58];
+      const cTextDark = [26, 24, 20];
+      const cTextSec = [107, 103, 96];
+      const cBorder = [232, 230, 227];
+
+      const mLeft = 20;
+      const mRight = 190;
+      let y = 20;
+
+      function checkPageBreak(spaceNeeded) {
+        if (y + spaceNeeded > 275) {
+          doc.addPage();
+          y = 20;
+          drawPageHeaderAndFooter();
+        }
+      }
+
+      function drawPageHeaderAndFooter() {
+        if (doc.getCurrentPageInfo().pageNumber === 1) return;
+
+        doc.setFillColor(248, 248, 250);
+        doc.rect(10, 10, 190, 277, "F");
+        
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(170, 170, 170);
+        doc.text("Bitácora SAVIA — Reporte de Bienestar", mLeft, 282);
+        doc.text("Villa María, Córdoba, Argentina", mRight, 282, { align: "right" });
+      }
+
+      doc.setFillColor(245, 244, 248);
+      doc.rect(10, 10, 190, 277, "F");
+
+      doc.setDrawColor(cPurple[0], cPurple[1], cPurple[2]);
+      doc.setLineWidth(0.4);
+      doc.rect(12, 12, 186, 273, "S");
+
+      const cX = 105;
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(40);
+      doc.setTextColor(cPurple[0], cPurple[1], cPurple[2]);
+      doc.text("Savia", cX, 110, { align: "center" });
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.setTextColor(cTextSec[0], cTextSec[1], cTextSec[2]);
+      doc.text("PROCESO TERAPÉUTICO CON MICRODOSIS", cX, 122, { align: "center" });
+
+      doc.setDrawColor(cBorder[0], cBorder[1], cBorder[2]);
+      doc.setLineWidth(0.5);
+      doc.line(55, 135, 155, 135);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
+      doc.setTextColor(cTextDark[0], cTextDark[1], cTextDark[2]);
+      doc.text(p.nombre, cX, 152, { align: "center" });
+
+      const finicio = p.fechaCalibracion;
+      const diasT = (p.semanasTotales || 6) * 7;
+      const ffinObj = getDayDate(p.fechaCalibracion, diasT);
+      const ffin = ffinObj ? ffinObj.toISOString().split('T')[0] : "-";
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.setTextColor(cTextSec[0], cTextSec[1], cTextSec[2]);
+      doc.text(`Inicio: ${finicio}  |  Cierre: ${ffin}`, cX, 162, { align: "center" });
+
+      doc.addPage();
+      
+      y = 25;
+      drawPageHeaderAndFooter();
+
+      doc.setFillColor(238, 237, 254);
+      doc.rect(mLeft, y, 170, 20, "F");
+      
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(cPurple[0], cPurple[1], cPurple[2]);
+      doc.text("INTENCIÓN", mLeft + 5, y + 6);
+      
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(11);
+      doc.setTextColor(cTextDark[0], cTextDark[1], cTextDark[2]);
+      
+      const wrapIntencion = doc.splitTextToSize(`"${p.intencion}"`, 160);
+      doc.text(wrapIntencion, mLeft + 5, y + 13);
+      y += 28;
+
+      checkPageBreak(50);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.setTextColor(cPurple[0], cPurple[1], cPurple[2]);
+      doc.text("SÍNTESIS DEL PROCESO", mLeft, y);
+      y += 8;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.setTextColor(cTextDark[0], cTextDark[1], cTextDark[2]);
+      const wrapReport = doc.splitTextToSize(p.informeCierre.texto, 170);
+      doc.text(wrapReport, mLeft, y);
+      y += wrapReport.length * 5.5 + 8;
+
+      checkPageBreak(40);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.setTextColor(cGreen[0], cGreen[1], cGreen[2]);
+      doc.text("RECOMENDACIONES A FUTURO", mLeft, y);
+      y += 8;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.setTextColor(cTextDark[0], cTextDark[1], cTextDark[2]);
+      const wrapRecomendacion = doc.splitTextToSize(p.informeCierre.recomendacion, 170);
+      doc.text(wrapRecomendacion, mLeft, y);
+      y += wrapRecomendacion.length * 5.5 + 15;
+
+      doc.addPage();
+      y = 25;
+      drawPageHeaderAndFooter();
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.setTextColor(cPurple[0], cPurple[1], cPurple[2]);
+      doc.text("Rueda de la Vida (Inicio vs. Cierre)", mLeft, y);
+      y += 8;
+
+      const radarCenter = [105, y + 42];
+      const radarRadius = 35;
+      const numAxes = AREAS_RUEDA.length;
+      const angleStep = (Math.PI * 2) / numAxes;
+
+      doc.setDrawColor(220, 220, 220);
+      doc.setLineWidth(0.2);
+      for (let s = 2; s <= 10; s += 2) {
+        const r = (s / 10) * radarRadius;
+        const pts = [];
+        for (let i = 0; i < numAxes; i++) {
+          const angle = i * angleStep - Math.PI / 2;
+          const px = radarCenter[0] + r * Math.cos(angle);
+          const py = radarCenter[1] + r * Math.sin(angle);
+          pts.push({ x: px, y: py });
+        }
+        for (let i = 0; i < pts.length; i++) {
+          const next = pts[(i + 1) % pts.length];
+          doc.line(pts[i].x, pts[i].y, next.x, next.y);
+        }
+      }
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7);
+      doc.setTextColor(cTextSec[0], cTextSec[1], cTextSec[2]);
+      for (let i = 0; i < numAxes; i++) {
+        const angle = i * angleStep - Math.PI / 2;
+        const xOuter = radarCenter[0] + radarRadius * Math.cos(angle);
+        const yOuter = radarCenter[1] + radarRadius * Math.sin(angle);
+        
+        doc.setDrawColor(210, 210, 210);
+        doc.line(radarCenter[0], radarCenter[1], xOuter, yOuter);
+
+        const textDist = radarRadius + 6;
+        const xText = radarCenter[0] + textDist * Math.cos(angle);
+        const yText = radarCenter[1] + textDist * Math.sin(angle);
+        
+        let align = "center";
+        if (Math.cos(angle) > 0.1) align = "left";
+        else if (Math.cos(angle) < -0.1) align = "right";
+
+        doc.text(AREAS_RUEDA[i], xText, yText + 1, { align: align });
+      }
+
+      if (p.ruedaVida?.inicio && Object.keys(p.ruedaVida.inicio).length > 0) {
+        const pts = [];
+        AREAS_RUEDA.forEach((area, i) => {
+          const score = p.ruedaVida.inicio[area] || 0;
+          const r = (score / 10) * radarRadius;
+          const angle = i * angleStep - Math.PI / 2;
+          pts.push({ x: radarCenter[0] + r * Math.cos(angle), y: radarCenter[1] + r * Math.sin(angle) });
+        });
+        doc.setDrawColor(cPurple[0], cPurple[1], cPurple[2]);
+        doc.setLineWidth(1.2);
+        for (let i = 0; i < pts.length; i++) {
+          const next = pts[(i + 1) % pts.length];
+          doc.line(pts[i].x, pts[i].y, next.x, next.y);
+        }
+      }
+
+      if (p.ruedaVida?.cierre && Object.keys(p.ruedaVida.cierre).length > 0) {
+        const pts = [];
+        AREAS_RUEDA.forEach((area, i) => {
+          const score = p.ruedaVida.cierre[area] || 0;
+          const r = (score / 10) * radarRadius;
+          const angle = i * angleStep - Math.PI / 2;
+          pts.push({ x: radarCenter[0] + r * Math.cos(angle), y: radarCenter[1] + r * Math.sin(angle) });
+        });
+        doc.setDrawColor(cGreen[0], cGreen[1], cGreen[2]);
+        doc.setLineWidth(1.2);
+        for (let i = 0; i < pts.length; i++) {
+          const next = pts[(i + 1) % pts.length];
+          doc.line(pts[i].x, pts[i].y, next.x, next.y);
+        }
+      }
+
+      y += 82;
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8.5);
+      doc.setDrawColor(cPurple[0], cPurple[1], cPurple[2]);
+      doc.setFillColor(cPurple[0], cPurple[1], cPurple[2]);
+      doc.rect(73, y, 4, 4, "FD");
+      doc.setTextColor(cTextDark[0], cTextDark[1], cTextDark[2]);
+      doc.text("Rueda Inicio (Sesión 2)", 80, y + 3.2);
+
+      doc.setDrawColor(cGreen[0], cGreen[1], cGreen[2]);
+      doc.setFillColor(cGreen[0], cGreen[1], cGreen[2]);
+      doc.rect(123, y, 4, 4, "FD");
+      doc.text("Rueda Cierre (Sesión 6)", 130, y + 3.2);
+
+      y += 15;
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(cTextDark[0], cTextDark[1], cTextDark[2]);
+      doc.text("Evolución de las 13 Dimensiones de Bienestar", mLeft, y);
+      y += 6;
+
+      doc.setFillColor(245, 245, 245);
+      doc.rect(mLeft, y, 170, 7, "F");
+      doc.setFontSize(9);
+      doc.text("Dimensión", mLeft + 2, y + 5);
+      doc.text("Línea Base", mLeft + 90, y + 5, { align: "right" });
+      doc.text("Cierre", mLeft + 125, y + 5, { align: "right" });
+      doc.text("Evolución", mLeft + 160, y + 5, { align: "right" });
+      y += 7;
+
+      DIMENSIONES.forEach(d => {
+        const scBase = p.estadosLineaBase?.[d.id] || 0;
+        const scCie = p.estadosCierre?.[d.id] || 0;
+        const diff = scCie - scBase;
+
+        doc.setFont("helvetica", "normal");
+        doc.text(d.id, mLeft + 2, y + 5);
+        doc.text(scBase ? scBase.toString() : "-", mLeft + 90, y + 5, { align: "right" });
+        doc.text(scCie ? scCie.toString() : "-", mLeft + 125, y + 5, { align: "right" });
+        
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(diff > 0 ? cGreen[0] : (diff < 0 ? cRed[0] : cTextSec[0]), diff > 0 ? cGreen[1] : (diff < 0 ? cRed[1] : cTextSec[1]), diff > 0 ? cGreen[2] : (diff < 0 ? cRed[2] : cTextSec[2]));
+        doc.text(diff > 0 ? `+${diff}` : diff.toString(), mLeft + 160, y + 5, { align: "right" });
+        doc.setTextColor(cTextDark[0], cTextDark[1], cTextDark[2]);
+
+        doc.setDrawColor(cBorder[0], cBorder[1], cBorder[2]);
+        doc.line(mLeft, y + 7, mRight, y + 7);
+        y += 7;
+      });
+
+      const filename = `${p.nombre.replace(/\s+/g, '_')}_${finicio}_${ffin}.pdf`;
+      doc.save(filename);
+      showToast("Reporte clínico PDF generado correctamente.");
+    }
+
+    function openDoseModal(dayIdx) {
+      const p = state.participantData;
+      const isReadOnly = p.estado === 'completada';
+
+      const modal = document.getElementById("dose-modal");
+      const backdrop = document.getElementById("dose-modal-backdrop");
+      const title = document.getElementById("dose-modal-title");
+      
+      const inDay = document.getElementById("dose-day-idx");
+      const inVal = document.getElementById("dose-value");
+      const inUnit = document.getElementById("dose-unit");
+      const inNote = document.getElementById("dose-note");
+
+      const savedDose = p.dosis?.[dayIdx] || null;
+
+      inDay.value = dayIdx;
+      inVal.value = savedDose ? savedDose.valor : "";
+      inUnit.value = savedDose ? savedDose.unidad : "mg";
+      inNote.value = savedDose ? savedDose.nota : "";
+
+      if (isReadOnly) {
+        inVal.setAttribute("disabled", "true");
+        inUnit.setAttribute("disabled", "true");
+        inNote.setAttribute("disabled", "true");
+        title.innerText = `Dosis del Día ${dayIdx} (Sólo Lectura)`;
+      } else {
+        inVal.removeAttribute("disabled");
+        inUnit.removeAttribute("disabled");
+        inNote.removeAttribute("disabled");
+        title.innerText = `Registrar Toma — Día ${dayIdx}`;
+      }
+
+      modal.classList.add("show");
+      backdrop.classList.add("show");
+
+      // Limpiar indicador de guardado al abrir
+      const saveDot = document.getElementById("dose-save-dot");
+      const saveText = document.getElementById("dose-save-text");
+      if (saveDot && saveText) {
+        saveDot.className = "save-dot";
+        saveText.innerText = savedDose ? "Dosis cargada" : "Autoguardado";
+      }
+
+      // Listeners de autoguardado con debounce (Sección 4)
+      if (!isReadOnly) {
+        const triggers = [inVal, inUnit, inNote];
+        triggers.forEach(elem => {
+          elem.addEventListener("input", () => {
+            triggerAutosaveDose(dayIdx, inVal.value, inUnit.value, inNote.value);
+          });
+          elem.addEventListener("blur", () => {
+            triggerAutosaveDose(dayIdx, inVal.value, inUnit.value, inNote.value);
+          });
+        });
+      }
+    }
+
+    function closeDoseModal() {
+      document.getElementById("dose-modal").classList.remove("show");
+      document.getElementById("dose-modal-backdrop").classList.remove("show");
+      
+      // Si se guardó una dosis, renderizar vista de nuevo para reflejar calendario instantáneamente
+      if (state.role === "participant") {
+        renderParticipantApp();
+      } else {
+        renderAdminParticipantDetailView();
+      }
+    }
+
+    document.getElementById("btn-close-dose-modal").addEventListener("click", closeDoseModal);
+    document.getElementById("dose-modal-backdrop").addEventListener("click", closeDoseModal);
+
+    function showToast(message) {
+      const toast = document.getElementById("toast-container");
+      const text = document.getElementById("toast-message");
+      if (toast && text) {
+        text.innerText = message;
+        toast.classList.add("show");
+        setTimeout(() => {
+          toast.classList.remove("show");
+        }, 3000);
+      }
+    }
+
+    function showLoading() {
+      const root = document.getElementById("app-root");
+      root.innerHTML = `
+        <div style="display: flex; justify-content: center; align-items: center; min-height: 400px; flex-direction: column; gap: 1rem;">
+          <h2 class="font-display">Conectando con la bitácora...</h2>
+          <p style="color: var(--text-secondary);">Sincronizando con Firestore en tiempo real</p>
+        </div>
+      `;
+    }
+
+    function renderError(message) {
+      const root = document.getElementById("app-root");
+      root.innerHTML = `
+        <div class="card" style="text-align: center; max-width: 500px; margin: 3rem auto; border-color: var(--red);">
+          <h2 class="font-display" style="color: var(--red); margin-bottom: 0.5rem;">Acceso Inhabilitado</h2>
+          <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">${message}</p>
+          <a href="${window.location.protocol}//${window.location.host}${window.location.pathname}" class="btn btn-secondary">
+            Ir al Panel Principal
+          </a>
+        </div>
+      `;
+    }
+
+    // --- DARK MODE CONTROLLER ---
+    function setupThemeController() {
+      const btn = document.getElementById("btn-theme-toggle");
+      const sun = document.getElementById("svg-sun");
+      const moon = document.getElementById("svg-moon");
+
+      // Cargar persistencia
+      const localTheme = localStorage.getItem("savia-theme") || "light";
+      document.documentElement.setAttribute("data-theme", localTheme);
+      updateThemeIcons(localTheme);
+
+      btn.addEventListener("click", () => {
+        const current = document.documentElement.getAttribute("data-theme");
+        const next = current === "light" ? "dark" : "light";
+        
+        document.documentElement.setAttribute("data-theme", next);
+        localStorage.setItem("savia-theme", next);
+        updateThemeIcons(next);
+      });
+
+      function updateThemeIcons(theme) {
+        if (theme === "dark") {
+          sun.style.display = "block";
+          moon.style.display = "none";
+        } else {
+          sun.style.display = "none";
+          moon.style.display = "block";
+        }
+      }
+    }
+
+    // ==========================================================================
+    // 5.13 INICIALIZACIÓN GLOBAL
+    // ==========================================================================
+    window.addEventListener("DOMContentLoaded", () => {
+      setupThemeController();
+      checkRouter();
+
+      // Soportar navegación de retroceso/adelante nativa del browser (popstate)
+      window.addEventListener("popstate", () => {
+        checkRouter();
+      });
     });
-    toast('Estados guardados ✓');
-  } catch(e) { toast('Error: ' + e.message); }
-}
 
-// ─── DIM BARS ─────────────────────────────────────────────────────────────────
-function buildDimBars() {
-  const c = document.getElementById('dim-bars-panel');
-  if (c.children.length) return;
-  const data  = [4.2,3.8,4.5,3.9,4.1,4.0,3.7,4.3,3.6,4.4,3.5,4.2,3.8];
-  const short = ['Sueño','Energía','Ánimo','Autoeficacia','Tranquilidad','Amabilidad','Foco','Creatividad','Cognitivo','Autocon.','Contempl.','Conexión','Espirit.'];
-  c.innerHTML = short.map((d, i) => `
-    <div class="dim-bar-row">
-      <div class="dim-bar-label">${d}</div>
-      <div class="dim-bar-track"><div class="dim-bar-fill" style="width:${(data[i]/5*100).toFixed(0)}%"></div></div>
-      <div class="dim-bar-val">${data[i]}</div>
-    </div>`).join('');
-}
-
-// ─── VISTA ADMIN DE PARTICIPANTE ─────────────────────────────────────────────
-let adminPersonaData = null;
-
-window.verPersona = async function(bid, bg, fg, initials) {
-  try {
-    const snap = await getDoc(doc(db, 'bitacoras', bid));
-    if (!snap.exists()) { toast('No se encontró la bitácora'); return; }
-    adminPersonaData = { id: bid, ...snap.data() };
-    const d = adminPersonaData;
-
-    // Header
-    const av = document.getElementById('ap-avatar');
-    av.textContent = initials;
-    av.style.background = bg;
-    av.style.color = fg;
-    document.getElementById('ap-nombre').textContent = d.nombre || 'Sin nombre';
-    const dias = d.diasRegistrados || 0;
-    document.getElementById('ap-meta').textContent =
-      d.fichaCompletada ? `Día ${dias} de 42 · ${d.estado || 'activa'}` : 'Pendiente de ficha';
-
-    // Reset tabs
-    document.querySelectorAll('#ap-tabs .tab').forEach((t,i) => t.classList.toggle('active', i===0));
-    ['ficha','registros','estados','dosis'].forEach(t => {
-      document.getElementById('aptab-' + t).style.display = t === 'ficha' ? 'block' : 'none';
-    });
-
-    renderApFicha(d);
-    showScreen('admin-persona');
-  } catch(e) { toast('Error: ' + e.message); }
-}
-
-window.volverAlPanelDesdePersona = async function() {
-  adminPersonaData = null;
-  await loadPanel();
-}
-
-window.apTab = function(t, el) {
-  document.querySelectorAll('#ap-tabs .tab').forEach(e => e.classList.remove('active'));
-  if (el) el.classList.add('active');
-  ['ficha','registros','estados','dosis'].forEach(tab => {
-    document.getElementById('aptab-' + tab).style.display = tab === t ? 'block' : 'none';
-  });
-  const d = adminPersonaData;
-  if (!d) return;
-  if (t === 'registros') renderApRegistros(d);
-  if (t === 'estados')   renderApEstados(d);
-  if (t === 'dosis')     renderApDosis(d);
-}
-
-function renderApFicha(d) {
-  const rows = [
-    ['Nombre', d.nombre || '—'],
-    ['Fecha de nacimiento', d.fnac || '—'],
-    ['Peso', d.peso ? d.peso + ' kg' : '—'],
-    ['Altura', d.altura ? d.altura + ' cm' : '—'],
-    ['Inicio calibración', d.fechaCalibracion || '—'],
-    ['Intención', d.intencion || '—'],
-    ['Beneficios esperados', d.beneficios || '—'],
-    ['Desafíos anticipados', d.desafios || '—'],
-    ['Medicamentos', d.medicamentos || '—'],
-  ];
-  let html = rows.map(([k, v]) => `
-    <div class="ficha-row">
-      <div class="ficha-key">${k}</div>
-      <div class="ficha-val">${v}</div>
-    </div>`).join('');
-
-  // Antecedentes
-  if (d.antecedentes) {
-    const si = Object.entries(d.antecedentes).filter(([,v]) => v).map(([k]) => k);
-    if (si.length) {
-      html += `<div class="ficha-row">
-        <div class="ficha-key">Antecedentes</div>
-        <div class="ficha-val">${si.map(s => `<span class="tag-si">${s}</span>`).join('')}</div>
-      </div>`;
-    }
-  }
-  // Sustancias
-  if (d.sustancias) {
-    const si = Object.entries(d.sustancias).filter(([,v]) => v).map(([k]) => k);
-    if (si.length) {
-      html += `<div class="ficha-row">
-        <div class="ficha-key">Sustancias (3m)</div>
-        <div class="ficha-val">${si.map(s => `<span class="tag-si">${s}</span>`).join('')}</div>
-      </div>`;
-    }
-  }
-  document.getElementById('ap-ficha-content').innerHTML = html || '<div class="empty-tab">Sin ficha completada aún.</div>';
-}
-
-function renderApRegistros(d) {
-  const regs = d.registros || {};
-  const keys = Object.keys(regs).sort((a,b) => {
-    const na = parseInt(a.replace('dia',''));
-    const nb = parseInt(b.replace('dia',''));
-    return nb - na; // más reciente primero
-  });
-  if (!keys.length) {
-    document.getElementById('ap-registros-content').innerHTML = '<div class="empty-tab">Sin registros diarios aún.</div>';
-    return;
-  }
-  const CAMPOS = [
-    ['sentiste', '¿Cómo te sentiste?'],
-    ['distinto', '¿Algo distinto?'],
-    ['alimentacion', 'Alimentación y energía'],
-    ['suenos', 'Sueños o sincronicidades'],
-    ['medicacion', 'Cambios en medicación'],
-    ['sexualidad', 'Sexualidad'],
-    ['dosisNota', 'Nota sobre dosis'],
-  ];
-  document.getElementById('ap-registros-content').innerHTML = keys.map(k => {
-    const num = k.replace('dia','');
-    const r = regs[k];
-    const fecha = r.fecha ? new Date(r.fecha).toLocaleDateString('es-AR', {day:'numeric',month:'long'}) : '';
-    const campos = CAMPOS.filter(([id]) => r[id]).map(([id, lbl]) => `
-      <div class="registro-campo">
-        <div class="registro-label">${lbl}</div>
-        <div class="registro-texto">${r[id]}</div>
-      </div>`).join('');
-    return `<div class="registro-item">
-      <div class="registro-dia">Día ${num} ${fecha ? '· ' + fecha : ''}</div>
-      ${campos || '<span style="font-size:13px;color:var(--text3);">Sin texto registrado.</span>'}
-    </div>`;
-  }).join('');
-}
-
-function renderApEstados(d) {
-  const estados = d.estados || {};
-  const keys = Object.keys(estados).sort((a,b) => parseInt(b.replace('dia','')) - parseInt(a.replace('dia','')));
-  const c = document.getElementById('ap-estados-content');
-  if (!keys.length) {
-    c.innerHTML = '<div class="card"><div class="empty-tab">Sin estados registrados aún.</div></div>';
-    return;
-  }
-  c.innerHTML = keys.map(k => {
-    const num = k.replace('dia','');
-    const est = estados[k];
-    const items = Object.entries(est).map(([dim, val]) => `
-      <div class="estado-item">
-        <div class="estado-dim">${dim}</div>
-        <div class="estado-score">${val}</div>
-      </div>`).join('');
-    return `<div class="card" style="margin-bottom:12px;">
-      <div style="font-family:'DM Serif Display',serif;font-size:15px;margin-bottom:12px;">Día ${num}</div>
-      <div class="estado-grid">${items}</div>
-    </div>`;
-  }).join('');
-}
-
-function renderApDosis(d) {
-  const dosis = d.dosis || {};
-  const keys = Object.keys(dosis).map(Number).sort((a,b) => a-b);
-  if (!keys.length) {
-    document.getElementById('ap-dosis-content').innerHTML = '<div class="empty-tab">Sin dosis registradas aún.</div>';
-    return;
-  }
-  document.getElementById('ap-dosis-content').innerHTML = keys.map(idx => {
-    const dobj = dosis[idx];
-    const tipo = getTipoDia(idx);
-    const cls = tipo === 'cal-toma' ? 'cal' : 'fad';
-    const label = tipo === 'cal-toma' ? 'Cal' : 'Fad';
-    return `<div class="dosis-item">
-      <div class="dosis-dia-badge ${cls}">D${idx+1}</div>
-      <div class="dosis-info">
-        <div class="dosis-valor">${dobj.valor || '—'} ${dobj.unidad || ''} <span style="font-size:11px;color:var(--text3);">${label}</span></div>
-        ${dobj.nota ? `<div class="dosis-nota-txt">${dobj.nota}</div>` : ''}
-      </div>
-    </div>`;
-  }).join('');
-}
-</script>
+  </script>
 </body>
 </html>
